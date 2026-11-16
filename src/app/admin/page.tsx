@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Activity, BadgeCheck, FileText, GraduationCap, ListVideo, Shield, Users } from "lucide-react";
+import { Activity, BadgeCheck, CheckCircle2, FileText, GraduationCap, ListVideo, PlayCircle, Shield, Users } from "lucide-react";
 import { requireAdmin } from "@/lib/session";
 import { getAdminStats } from "@/lib/stats";
 import { getChannelPlaylists } from "@/lib/youtube";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Reveal } from "@/components/ui/Reveal";
+import { SyncButton } from "@/components/dashboard/SyncButton";
 
 export const metadata: Metadata = { title: "Admin dashboard", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -23,6 +24,9 @@ export default async function AdminPage() {
         </span>
         <h1 className="font-display text-[36px] font-bold leading-tight sm:text-[46px]">Platform overview</h1>
         <p className="text-text-muted">Live numbers from the database. User management, content and blog tools arrive in Phase 7.</p>
+        <div className="mt-4">
+          <SyncButton />
+        </div>
       </Reveal>
 
       <section aria-label="Platform statistics" className="mb-14 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
@@ -30,6 +34,8 @@ export default async function AdminPage() {
         <StatCard icon={Activity} label="Active (30 days)" value={stats.activeUsers} delay={0.05} tone="text-brand-green" />
         <StatCard icon={BadgeCheck} label="Verified emails" value={stats.verifiedUsers} delay={0.1} tone="text-blue-300" />
         <StatCard icon={ListVideo} label="YouTube playlists" value={playlists.length} delay={0.15} />
+        <StatCard icon={PlayCircle} label="Lessons in database" value={stats.lessons} delay={0.18} tone="text-blue-300" />
+        <StatCard icon={CheckCircle2} label="Lessons completed (all users)" value={stats.completions} delay={0.2} tone="text-brand-green" />
         <StatCard icon={GraduationCap} label="Learning paths" value={stats.learningPaths} delay={0.2} tone="text-brand-green" />
         <StatCard icon={FileText} label="Uploaded notes" value={stats.notes} delay={0.25} tone="text-amber-300" />
       </section>
