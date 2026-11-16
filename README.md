@@ -31,6 +31,16 @@
 - `/admin` — admin-only overview: user counts and recent registrations
 - Navbar shows your name, avatar and a menu (Dashboard / Admin / Sign out)
 
+## What is built (Phase 4 — learning progress)
+
+- YouTube playlists and videos are copied into the database (Playlist + Lesson rows), re-synced hourly,
+  or instantly with **Sync YouTube now** on `/admin`. Each playlist is placed in its technology's learning path.
+- Playlist page: **Mark as complete** per lesson (auto-moves to the next one), progress bar,
+  Previous / Next, **Save playlist**, resume at the first unfinished lesson, `?lesson=N` links
+- Completing a lesson enrolls the student in that learning path and records activity
+- Dashboard: **Continue learning**, **My playlists**, **Completed**, **Recent activity**, live streak and progress %
+- Admin: lessons in database, total completions, sync button (logged in the audit log)
+
 Notes / Projects / Blog pages still show "coming soon".
 
 ## Run it locally
@@ -140,7 +150,7 @@ prisma/schema.prisma      database schema
 | 1 | Design, homepage, 3D, YouTube auto-sync | ✅ done |
 | 2 | Sign up / sign in (email + Google), roles | ✅ done |
 | 3 | Database, migrations, ownership checks | ✅ done (with Phase 2) |
-| 4 | Learning paths & lessons in the database | next |
+| 4 | Lessons in the database, progress tracking, saved playlists | ✅ done |
 | 5 | PDF notes on S3 | |
 | 6 | Personal dashboard (progress, bookmarks, streaks) | |
 | 7 | Admin dashboard | |

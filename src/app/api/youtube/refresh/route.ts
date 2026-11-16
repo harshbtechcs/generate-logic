@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { syncAllPlaylists } from "@/lib/sync";
 
 /**
  * Force an immediate YouTube sync instead of waiting for the hourly refresh.
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
   if (!ok) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   revalidateTag("youtube");
+  const synced = await syncAllPlaylists(); // also copy playlists + lessons into the database
   revalidatePath("/", "layout");
-  return Response.json({ refreshed: true });
+  return Response.json({ refreshed: true, synced });
 }
