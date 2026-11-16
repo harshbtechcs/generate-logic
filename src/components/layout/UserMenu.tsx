@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Settings, Shield } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 
 function initials(name: string) {
@@ -96,6 +96,9 @@ export function UserMenu({
             <div className="p-1.5">
               <Link role="menuitem" href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-white/[0.05]">
                 <LayoutDashboard size={17} aria-hidden="true" /> My dashboard
+              </Link>
+              <Link role="menuitem" href="/dashboard/settings" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-white/[0.05]">
+                <Settings size={17} aria-hidden="true" /> Account settings
               </Link>
               {isAdmin && (
                 <Link role="menuitem" href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-white/[0.05]">

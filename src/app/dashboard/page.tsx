@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookMarked, BookOpenCheck, CheckCircle2, Flame, GraduationCap, ListVideo, PieChart, PlayCircle, Shield } from "lucide-react";
+import { BookMarked, BookOpenCheck, CheckCircle2, Flame, GraduationCap, ListVideo, PieChart, PlayCircle, Settings, Shield } from "lucide-react";
 import { requireUser, isAdmin } from "@/lib/session";
 import { getUserStats } from "@/lib/stats";
 import { getRecentActivity, getUserCourses } from "@/lib/learning";
@@ -43,11 +43,16 @@ export default async function DashboardPage({ searchParams }: Props) {
           </h1>
           <p className="text-lg text-text-muted">Continue your Cloud &amp; DevOps learning journey.</p>
         </div>
+        <div className="flex flex-wrap gap-3">
+        <Link href="/dashboard/settings" className="gl-btn inline-flex items-center gap-2 rounded-xl border border-slate-400/30 px-5 py-3 font-medium">
+          <Settings size={18} aria-hidden="true" /> Settings
+        </Link>
         {isAdmin(user) && (
           <Link href="/admin" className="gl-btn inline-flex items-center gap-2 rounded-xl border border-amber-300/40 bg-amber-300/10 px-5 py-3 font-medium text-amber-100">
             <Shield size={18} aria-hidden="true" /> Admin dashboard
           </Link>
         )}
+        </div>
       </Reveal>
 
       <section aria-label="Your statistics" className="mb-14 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
