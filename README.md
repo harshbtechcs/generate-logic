@@ -41,6 +41,16 @@
 - Dashboard: **Continue learning**, **My playlists**, **Completed**, **Recent activity**, live streak and progress %
 - Admin: lessons in database, total completions, sync button (logged in the audit log)
 
+## Launch readiness
+
+- `/privacy` — Privacy Policy written for what the site actually does (DPDP Act 2023 aware)
+- `/terms` — Terms & Conditions
+- `/dashboard/settings` — change name, remove photo, change password (signs out other devices),
+  sign out of other devices, **delete account** (password or recent sign-in + typing DELETE;
+  all personal data is removed through database cascades)
+
+Have the Privacy Policy and Terms reviewed by someone qualified before launch, and keep them in sync with the code.
+
 Notes / Projects / Blog pages still show "coming soon".
 
 ## Run it locally

@@ -27,6 +27,9 @@ export const auth = betterAuth({
       role: { type: "string", defaultValue: "STUDENT", input: false },
       accountStatus: { type: "string", defaultValue: "ACTIVE", input: false },
     },
+    // Users can delete their own account (and, via DB cascades, all their data).
+    // Email/password users must re-enter their password; Google users need a recent sign-in.
+    deleteUser: { enabled: true },
   },
 
   emailAndPassword: {
@@ -92,6 +95,17 @@ export const auth = betterAuth({
         },
       },
       update: {
+        // Validate profile edits coming from Account settings.
+        before: async (data) => {
+          if (typeof data.name === "string") {
+            const name = data.name.trim().replace(/\s+/g, " ");
+            if (name.length < 2 || name.length > 80) {
+              throw new APIError("BAD_REQUEST", { message: "Name must be 2–80 characters." });
+            }
+            return { data: { ...data, name } };
+          }
+          return { data };
+        },
         // Email/password admin becomes ADMIN right after clicking the verification link.
         after: async (user) => {
           const u = user as typeof user & { role?: string };

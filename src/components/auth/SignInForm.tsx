@@ -11,6 +11,7 @@ const initialMessages: Record<string, { kind: "error" | "success"; text: string 
   google: { kind: "error", text: "Google sign-in did not complete. Please try again." },
   reset: { kind: "success", text: "Password updated. Sign in with your new password." },
   verified: { kind: "success", text: "Email verified. You can sign in now." },
+  deleted: { kind: "success", text: "Your account and all its data have been deleted." },
 };
 
 export function SignInForm({ next, notice }: { next: string; notice?: string }) {
