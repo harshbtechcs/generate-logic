@@ -1,0 +1,339 @@
+// Generate Logic — database schema (PostgreSQL)
+// Follows section 13 of the project documentation. Tables are named in
+// snake_case in the database; models are PascalCase in code.
+//
+// Every user-owned table has a userId with onDelete: Cascade, so deleting an
+// account removes all of that user's private data (security requirement #17).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled connection (Neon "-pooler" host) used by the app
+  directUrl = env("DIRECT_URL")   // direct connection used by migrations
+}
+
+// ─────────────────────────────── Users & auth ───────────────────────────────
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+}
+
+// The four models below (User, Session, Account, Verification) are the tables
+// Better Auth needs. Passwords are stored hashed in Account.password
+// (providerId = "credential"); Google sign-ins get an Account row with
+// providerId = "google" and no password.
+model User {
+  id             String        @id @default(cuid())
+  fullName       String        @map("full_name") // Better Auth "name"
+  email          String        @unique
+  emailVerified  Boolean       @default(false) @map("email_verified")
+  profilePicture String?       @map("profile_picture") // Better Auth "image"
+  role           Role          @default(STUDENT)
+  accountStatus  AccountStatus @default(ACTIVE) @map("account_status")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  accounts      Account[]
+  sessions      Session[]
+  enrollments   UserEnrollment[]
+  progress      UserProgress[]
+  bookmarks     UserBookmark[]
+  activities    UserActivity[]
+  notifications UserNotification[]
+  projects      UserProject[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id") // "credential" or "google"
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token") @db.Text
+  refreshToken          String?   @map("refresh_token") @db.Text
+  idToken               String?   @map("id_token") @db.Text
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String? // hashed (scrypt); never stored in plain text
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+// Email-verification and password-reset tokens
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// ─────────────────────────────── Content ───────────────────────────────
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Visibility {
+  PUBLISHED
+  HIDDEN
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique // matches /public/logos/<slug>.svg and /learn/<slug>
+  name        String
+  description String?
+  thumbnail   String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  learningPaths LearningPath[]
+
+  @@map("categories")
+}
+
+model LearningPath {
+  id              String     @id @default(cuid())
+  categoryId      String     @map("category_id")
+  title           String
+  description     String?
+  difficultyLevel Difficulty @default(BEGINNER) @map("difficulty_level")
+  visibility      Visibility @default(PUBLISHED)
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  category    Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  playlists   Playlist[]
+  enrollments UserEnrollment[]
+
+  @@index([categoryId])
+  @@map("learning_paths")
+}
+
+// Synced from YouTube; admins can assign a learning path and hide/show it.
+model Playlist {
+  id                String     @id @default(cuid())
+  learningPathId    String?    @map("learning_path_id")
+  youtubePlaylistId String     @unique @map("youtube_playlist_id")
+  title             String
+  description       String?
+  thumbnail         String?
+  videoCount        Int        @default(0) @map("video_count")
+  publishedAt       DateTime?  @map("published_at")
+  displayOrder      Int        @default(0) @map("display_order")
+  status            Visibility @default(PUBLISHED)
+  syncedAt          DateTime?  @map("synced_at")
+
+  learningPath LearningPath? @relation(fields: [learningPathId], references: [id], onDelete: SetNull)
+  lessons      Lesson[]
+  notes        Note[]
+
+  @@index([learningPathId])
+  @@map("playlists")
+}
+
+model Lesson {
+  id             String  @id @default(cuid())
+  playlistId     String  @map("playlist_id")
+  youtubeVideoId String  @map("youtube_video_id")
+  title          String
+  description    String?
+  sequenceNumber Int     @map("sequence_number")
+
+  playlist Playlist       @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  notes    Note[]
+  progress UserProgress[]
+
+  @@unique([playlistId, youtubeVideoId])
+  @@index([playlistId, sequenceNumber])
+  @@map("lessons")
+}
+
+model Note {
+  id          String     @id @default(cuid())
+  playlistId  String     @map("playlist_id")
+  lessonId    String?    @map("lesson_id")
+  title       String
+  description String?
+  s3ObjectKey String     @unique @map("s3_object_key")
+  fileType    String     @map("file_type")
+  fileSize    Int        @map("file_size") // bytes
+  visibility  Visibility @default(PUBLISHED)
+  uploadedAt  DateTime   @default(now()) @map("uploaded_at")
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  lesson   Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  @@index([playlistId])
+  @@index([lessonId])
+  @@map("notes")
+}
+
+// ─────────────────────────────── Per-user data ───────────────────────────────
+// Every query on these tables MUST filter by the signed-in user's id.
+
+model UserEnrollment {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  learningPathId String   @map("learning_path_id")
+  enrolledAt     DateTime @default(now()) @map("enrolled_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningPath LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, learningPathId])
+  @@map("user_enrollments")
+}
+
+enum CompletionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model UserProgress {
+  id               String           @id @default(cuid())
+  userId           String           @map("user_id")
+  lessonId         String           @map("lesson_id")
+  completionStatus CompletionStatus @default(IN_PROGRESS) @map("completion_status")
+  completedAt      DateTime?        @map("completed_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId, completedAt])
+  @@map("user_progress")
+}
+
+enum ResourceType {
+  PLAYLIST
+  LESSON
+  NOTE
+  ARTICLE
+  PROJECT
+}
+
+model UserBookmark {
+  id           String       @id @default(cuid())
+  userId       String       @map("user_id")
+  resourceType ResourceType @map("resource_type")
+  resourceId   String       @map("resource_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceType, resourceId])
+  @@map("user_bookmarks")
+}
+
+enum ActivityType {
+  OPENED_PLAYLIST
+  COMPLETED_LESSON
+  DOWNLOADED_NOTE
+  OPENED_PROJECT
+}
+
+model UserActivity {
+  id           String       @id @default(cuid())
+  userId       String       @map("user_id")
+  activityType ActivityType @map("activity_type")
+  resourceId   String       @map("resource_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("user_activity")
+}
+
+model UserNotification {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  title      String
+  message    String
+  readStatus Boolean  @default(false) @map("read_status")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readStatus])
+  @@map("user_notifications")
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model UserProject {
+  id             String        @id @default(cuid())
+  userId         String        @map("user_id")
+  projectTitle   String        @map("project_title")
+  technology     String
+  description    String?
+  githubUrl      String?       @map("github_url")
+  projectStatus  ProjectStatus @default(IN_PROGRESS) @map("project_status")
+  completionDate DateTime?     @map("completion_date")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_projects")
+}
+
+// ─────────────────────────────── Admin ───────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?  @map("actor_user_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}

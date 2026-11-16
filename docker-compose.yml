@@ -1,0 +1,35 @@
+# Local development services.
+# Start only the database:   docker compose up -d db
+# Run the full app container: docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: generatelogic
+      POSTGRES_PASSWORD: generatelogic
+      POSTGRES_DB: generatelogic
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U generatelogic"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgresql://generatelogic:generatelogic@db:5432/generatelogic?schema=public
+    ports:
+      - "3000:3000"
+    profiles: ["app"]
+
+volumes:
+  pgdata:
