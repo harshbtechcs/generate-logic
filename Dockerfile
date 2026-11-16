@@ -3,6 +3,7 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
 COPY package.json package-lock.json* ./
+COPY prisma ./prisma
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # ---- build ----
@@ -12,7 +13,8 @@ RUN apk add --no-cache openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate && npm run build
+# Migrations run at deploy time (prisma migrate deploy), not while building the image.
+RUN npx prisma generate && npm run build:local
 
 # ---- run ----
 FROM node:22-alpine AS runner

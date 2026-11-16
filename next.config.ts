@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   images: {
+    // YouTube thumbnails are already optimised; skipping Next's image optimiser
+    // keeps us well inside the free hosting plan's image limits.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "yt3.ggpht.com" },

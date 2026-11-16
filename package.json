@@ -5,14 +5,16 @@
   "description": "Generate Logic — 3D interactive Cloud & DevOps learning platform",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "dotenv -e .env.local -- prisma studio"
+    "db:studio": "dotenv -e .env.local -- prisma studio",
+    "build:local": "next build",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

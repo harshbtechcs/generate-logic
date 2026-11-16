@@ -111,6 +111,22 @@ Until `generatelogic.in` is verified in Resend, emails only reach the address yo
 Local PostgreSQL instead of Neon: `docker compose up -d db` and use the URL from `docker-compose.yml` for both
 `DATABASE_URL` and `DIRECT_URL`.
 
+## Deploy for free on Vercel
+
+1. vercel.com → sign up with GitHub → **Add New → Project** → import `generate-logic`.
+2. Add every variable from `.env.local` under **Environment Variables**, with
+   `NEXT_PUBLIC_SITE_URL=https://generatelogic.in` and a **new** `AUTH_SECRET`.
+3. Deploy. The build runs `prisma generate`, `prisma migrate deploy` (needs `DIRECT_URL`) and `next build`.
+4. Settings → Domains → add `generatelogic.in` and `www.generatelogic.in`, then copy the DNS records Vercel
+   shows into GoDaddy → DNS.
+5. Google Cloud → OAuth client: add `https://generatelogic.in` and
+   `https://generatelogic.in/api/auth/callback/google`; Branding: add home, privacy and terms links → Publish app.
+6. Resend → Domains → add `generatelogic.in`, copy its DNS records into GoDaddy, then set
+   `EMAIL_FROM="Generate Logic <noreply@generatelogic.in>"` in Vercel and redeploy.
+
+`vercel.json` pins functions to Singapore (`sin1`), next to the Neon database.
+Vercel's Hobby plan is for personal, non-commercial use — move to a paid plan or AWS before adding paid features or ads.
+
 ## Production build
 
 ```bash
