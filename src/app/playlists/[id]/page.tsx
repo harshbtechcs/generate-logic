@@ -37,13 +37,15 @@ export default async function PlaylistPage({ params, searchParams }: Props) {
   const { playlist, lessons, dbId } = data;
 
   const userId = session?.user.id;
-  const [completedIds, saved] = userId
-    ? await Promise.all([
-        getCompletedLessonIds(userId, lessons.map((l) => l.id)),
-        isPlaylistSaved(userId, dbId),
-        recordPlaylistOpened(userId, dbId),
-      ])
-    : [[], false];
+  let completedIds: string[] = [];
+  let saved = false;
+  if (userId) {
+    [completedIds, saved] = await Promise.all([
+      getCompletedLessonIds(userId, lessons.map((l) => l.id)),
+      isPlaylistSaved(userId, dbId),
+    ]);
+    await recordPlaylistOpened(userId, dbId);
+  }
 
   // ?lesson=N opens lesson N; otherwise resume at the first unfinished lesson.
   const requested = Number(typeof sp.lesson === "string" ? sp.lesson : NaN);
