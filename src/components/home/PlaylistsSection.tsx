@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RefreshCw } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Playlist } from "@/lib/youtube";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -19,10 +19,12 @@ export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
         kicker="03 / PLAYLISTS"
         title="Fresh from the channel"
         aside={
-          <div className="flex items-center gap-2.5 rounded-xl border border-green-400/30 bg-green-400/5 px-4 py-2.5 text-sm text-green-200">
-            <RefreshCw size={18} aria-hidden="true" />
-            New YouTube playlists appear here automatically
-          </div>
+          <Link
+            href="/playlists"
+            className="gl-btn inline-flex items-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/10 px-5 py-3 text-sm font-medium text-teal-100"
+          >
+            View all playlists <ArrowRight size={17} aria-hidden="true" />
+          </Link>
         }
       />
       <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">

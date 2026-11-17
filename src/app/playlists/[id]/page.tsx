@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getPlaylist } from "@/lib/youtube";
 import { getSyncedPlaylist } from "@/lib/sync";
-import { getSession } from "@/lib/session";
+import { requireUser } from "@/lib/session";
 import { getCompletedLessonIds, isPlaylistSaved, recordPlaylistOpened } from "@/lib/learning";
 import { PlaylistPlayer } from "@/components/playlist/PlaylistPlayer";
 
@@ -32,11 +32,13 @@ export default async function PlaylistPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
 
-  const [data, session] = await Promise.all([getSyncedPlaylist(id), getSession()]);
+  // Watching a playlist needs an account; sign-in brings the user straight back here.
+  const user = await requireUser(`/playlists/${id}`);
+  const data = await getSyncedPlaylist(id);
   if (!data) notFound();
   const { playlist, lessons, dbId } = data;
 
-  const userId = session?.user.id;
+  const userId = user.id;
   let completedIds: string[] = [];
   let saved = false;
   if (userId && dbId) {

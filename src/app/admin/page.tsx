@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Activity, BadgeCheck, CheckCircle2, FileText, GraduationCap, ListVideo, PlayCircle, Shield, Users } from "lucide-react";
 import { requireAdmin } from "@/lib/session";
 import { getAdminStats } from "@/lib/stats";
@@ -23,8 +24,14 @@ export default async function AdminPage() {
           <Shield size={15} aria-hidden="true" /> ADMIN
         </span>
         <h1 className="font-display text-[36px] font-bold leading-tight sm:text-[46px]">Platform overview</h1>
-        <p className="text-text-muted">Live numbers from the database. User management, content and blog tools arrive in Phase 7.</p>
-        <div className="mt-4">
+        <p className="text-text-muted">Live numbers from the database.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Link
+            href="/admin/users"
+            className="gl-btn inline-flex items-center gap-2 rounded-xl bg-brand-teal px-5 py-3 text-sm font-semibold text-ink-900"
+          >
+            <Users size={17} aria-hidden="true" /> Manage users
+          </Link>
           <SyncButton />
         </div>
       </Reveal>
@@ -64,7 +71,11 @@ export default async function AdminPage() {
                 const providers = [...new Set(u.accounts.map((a) => (a.providerId === "credential" ? "Email" : "Google")))];
                 return (
                   <tr key={u.id} className="border-t border-slate-400/10">
-                    <td className="px-4 py-3 font-medium">{u.fullName}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link href={`/admin/users/${u.id}`} className="hover:text-brand-teal hover:underline">
+                        {u.fullName}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-text-muted">{u.email}</td>
                     <td className="px-4 py-3 text-text-muted">{providers.join(", ") || "—"}</td>
                     <td className="px-4 py-3">

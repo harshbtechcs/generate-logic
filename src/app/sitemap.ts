@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { technologies } from "@/lib/data";
 import { site } from "@/lib/site";
-import { getChannelPlaylists } from "@/lib/youtube";
 
 // Served at /sitemap.xml — the list of public pages Google should index.
 // Rebuilt at most once an hour so new YouTube playlists get added automatically.
@@ -28,12 +27,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const playlists: MetadataRoute.Sitemap = (await getChannelPlaylists()).map((p) => ({
-    url: `${base}/playlists/${p.id}`,
-    lastModified: new Date(p.publishedAt),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
-
-  return [...pages, ...learn, ...playlists];
+  // Individual playlist pages need sign-in, so they are not listed for search engines.
+  return [...pages, ...learn];
 }

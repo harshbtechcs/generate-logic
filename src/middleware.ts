@@ -19,5 +19,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  // /playlists (the list) stays public; /playlists/<id> (watching) needs an account.
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/playlists/:id+"],
 };
