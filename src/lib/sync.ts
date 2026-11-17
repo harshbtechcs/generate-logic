@@ -117,12 +117,15 @@ export async function getSyncedPlaylist(youtubePlaylistId: string) {
   return { dbId: row.id, learningPathId: row.learningPathId, playlist: yt.playlist, lessons };
 }
 
-/** Sync every public playlist on the channel (used by "Sync now"). Returns how many were synced. */
+/**
+ * Sync every public playlist on the channel (used by "Sync YouTube now" and /api/youtube/refresh).
+ * Bypasses the hourly cache so a playlist published a minute ago is picked up. Returns how many were synced.
+ */
 export async function syncAllPlaylists() {
-  const playlists = await getChannelPlaylists();
+  const playlists = await getChannelPlaylists({ fresh: true });
   let synced = 0;
   for (const p of playlists) {
-    const data = await getPlaylist(p.id);
+    const data = await getPlaylist(p.id, { fresh: true });
     if (data && data.videos.length > 0) {
       await writePlaylist(data.playlist, data.videos);
       synced++;

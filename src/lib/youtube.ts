@@ -49,13 +49,17 @@ export function isYouTubeConfigured() {
   return config() !== null;
 }
 
-async function yt<T>(path: string, params: Record<string, string>): Promise<T> {
+/** fresh: true skips the hourly cache — used by "Sync YouTube now" so new playlists show immediately. */
+type FetchOpts = { fresh?: boolean };
+
+async function yt<T>(path: string, params: Record<string, string>, opts: FetchOpts = {}): Promise<T> {
   const cfg = config();
   if (!cfg) throw new Error("YouTube API is not configured");
   const qs = new URLSearchParams({ ...params, key: cfg.key });
-  const res = await fetch(`${API}/${path}?${qs}`, {
-    next: { revalidate: SYNC_INTERVAL_SECONDS, tags: ["youtube"] },
-  });
+  const res = await fetch(
+    `${API}/${path}?${qs}`,
+    opts.fresh ? { cache: "no-store" } : { next: { revalidate: SYNC_INTERVAL_SECONDS, tags: ["youtube"] } },
+  );
   if (!res.ok) {
     // Do not log the URL: it contains the API key.
     throw new Error(`YouTube API ${path} failed with status ${res.status}`);
@@ -74,19 +78,23 @@ type PlaylistsResponse = {
 };
 
 /** All public playlists on the channel, newest first. Returns [] if not configured or on error. */
-export async function getChannelPlaylists(): Promise<Playlist[]> {
+export async function getChannelPlaylists(opts: FetchOpts = {}): Promise<Playlist[]> {
   const cfg = config();
   if (!cfg) return [];
   try {
     const out: Playlist[] = [];
     let pageToken: string | undefined;
     do {
-      const data: PlaylistsResponse = await yt<PlaylistsResponse>("playlists", {
-        part: "snippet,contentDetails,status",
-        channelId: cfg.channelId,
-        maxResults: "50",
-        ...(pageToken ? { pageToken } : {}),
-      });
+      const data: PlaylistsResponse = await yt<PlaylistsResponse>(
+        "playlists",
+        {
+          part: "snippet,contentDetails,status",
+          channelId: cfg.channelId,
+          maxResults: "50",
+          ...(pageToken ? { pageToken } : {}),
+        },
+        opts,
+      );
       for (const p of data.items) {
         if (p.status && p.status.privacyStatus !== "public") continue;
         if (p.contentDetails.itemCount === 0) continue;
@@ -127,9 +135,10 @@ type PlaylistItemsResponse = {
 /** One playlist with its videos in order, or null if it does not exist / is not on this channel. */
 export async function getPlaylist(
   playlistId: string,
+  opts: FetchOpts = {},
 ): Promise<{ playlist: Playlist; videos: PlaylistVideo[] } | null> {
   if (!/^[A-Za-z0-9_-]{10,64}$/.test(playlistId)) return null;
-  const all = await getChannelPlaylists();
+  const all = await getChannelPlaylists(opts);
   const playlist = all.find((p) => p.id === playlistId);
   if (!playlist) return null;
 
@@ -137,12 +146,16 @@ export async function getPlaylist(
     const videos: PlaylistVideo[] = [];
     let pageToken: string | undefined;
     do {
-      const data: PlaylistItemsResponse = await yt<PlaylistItemsResponse>("playlistItems", {
-        part: "snippet,status",
-        playlistId,
-        maxResults: "50",
-        ...(pageToken ? { pageToken } : {}),
-      });
+      const data: PlaylistItemsResponse = await yt<PlaylistItemsResponse>(
+        "playlistItems",
+        {
+          part: "snippet,status",
+          playlistId,
+          maxResults: "50",
+          ...(pageToken ? { pageToken } : {}),
+        },
+        opts,
+      );
       for (const it of data.items) {
         if (it.status && it.status.privacyStatus !== "public") continue;
         videos.push({
