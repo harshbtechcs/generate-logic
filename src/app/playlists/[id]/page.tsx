@@ -39,7 +39,7 @@ export default async function PlaylistPage({ params, searchParams }: Props) {
   const userId = session?.user.id;
   let completedIds: string[] = [];
   let saved = false;
-  if (userId) {
+  if (userId && dbId) {
     [completedIds, saved] = await Promise.all([
       getCompletedLessonIds(userId, lessons.map((l) => l.id)),
       isPlaylistSaved(userId, dbId),

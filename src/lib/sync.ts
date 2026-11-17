@@ -106,7 +106,14 @@ export async function getSyncedPlaylist(youtubePlaylistId: string) {
       include: { lessons: { select: { id: true, youtubeVideoId: true } } },
     });
   }
-  if (!row || row.status === "HIDDEN") return null;
+  if (row?.status === "HIDDEN") return null;
+  if (!row) {
+    // Playlist is public on the channel but none of its videos could be read as public
+    // (unlisted / private / scheduled videos), so there is nothing to save yet.
+    // Still show the page with YouTube's own player instead of a 404.
+    console.warn(`[sync] playlist ${youtubePlaylistId} has no public videos yet`);
+    return { dbId: null, learningPathId: null, playlist: yt.playlist, lessons: [] as SyncedLesson[] };
+  }
 
   const idByVideo = new Map(row.lessons.map((l) => [l.youtubeVideoId, l.id]));
   const lessons: SyncedLesson[] = yt.videos.flatMap((v, i) => {
@@ -114,7 +121,7 @@ export async function getSyncedPlaylist(youtubePlaylistId: string) {
     return id ? [{ id, videoId: v.id, title: v.title, thumbnail: v.thumbnail, sequence: i + 1 }] : [];
   });
 
-  return { dbId: row.id, learningPathId: row.learningPathId, playlist: yt.playlist, lessons };
+  return { dbId: row.id as string | null, learningPathId: row.learningPathId, playlist: yt.playlist, lessons };
 }
 
 /**
