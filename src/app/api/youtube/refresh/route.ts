@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (!ok) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   revalidateTag("youtube");
-  const synced = await syncAllPlaylists(); // also copy playlists + lessons into the database
+  const result = await syncAllPlaylists(); // also copy playlists + lessons into the database
   revalidatePath("/", "layout");
-  return Response.json({ refreshed: true, synced });
+  return Response.json({ refreshed: true, ...result });
 }

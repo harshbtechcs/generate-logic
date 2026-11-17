@@ -71,7 +71,7 @@ type PlaylistsResponse = {
   nextPageToken?: string;
   items: {
     id: string;
-    snippet: { title: string; description: string; publishedAt: string; thumbnails?: Thumbs };
+    snippet: { title: string; description: string; publishedAt: string; channelId?: string; thumbnails?: Thumbs };
     contentDetails: { itemCount: number };
     status?: { privacyStatus: string };
   }[];
@@ -138,9 +138,31 @@ export async function getPlaylist(
   opts: FetchOpts = {},
 ): Promise<{ playlist: Playlist; videos: PlaylistVideo[] } | null> {
   if (!/^[A-Za-z0-9_-]{10,64}$/.test(playlistId)) return null;
-  const all = await getChannelPlaylists(opts);
-  const playlist = all.find((p) => p.id === playlistId);
-  if (!playlist) return null;
+  const cfg = config();
+  if (!cfg) return null;
+
+  // Look this one playlist up directly (its own cache entry) instead of searching the
+  // channel-wide list, which may be up to an hour old and miss a just-published playlist.
+  let playlist: Playlist;
+  try {
+    const found = await yt<PlaylistsResponse>("playlists", { part: "snippet,contentDetails,status", id: playlistId }, opts);
+    const p = found.items[0];
+    if (!p) return null;
+    if (p.snippet.channelId && p.snippet.channelId !== cfg.channelId) return null; // not our channel
+    if (p.status && p.status.privacyStatus !== "public") return null;
+    playlist = {
+      id: p.id,
+      title: p.snippet.title,
+      description: p.snippet.description,
+      thumbnail: bestThumb(p.snippet.thumbnails),
+      videoCount: p.contentDetails.itemCount,
+      publishedAt: p.snippet.publishedAt,
+      technology: matchTechnology(`${p.snippet.title} ${p.snippet.description}`),
+    };
+  } catch (err) {
+    console.error("[youtube] playlist lookup failed:", (err as Error).message);
+    return null;
+  }
 
   try {
     const videos: PlaylistVideo[] = [];

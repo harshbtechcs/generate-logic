@@ -131,12 +131,18 @@ export async function getSyncedPlaylist(youtubePlaylistId: string) {
 export async function syncAllPlaylists() {
   const playlists = await getChannelPlaylists({ fresh: true });
   let synced = 0;
+  const failed: string[] = [];
   for (const p of playlists) {
-    const data = await getPlaylist(p.id, { fresh: true });
-    if (data && data.videos.length > 0) {
-      await writePlaylist(data.playlist, data.videos);
-      synced++;
+    try {
+      const data = await getPlaylist(p.id, { fresh: true });
+      if (data && data.videos.length > 0) {
+        await writePlaylist(data.playlist, data.videos);
+        synced++;
+      }
+    } catch (err) {
+      console.error(`[sync] playlist ${p.id} failed:`, (err as Error).message);
+      failed.push(p.title);
     }
   }
-  return synced;
+  return { found: playlists.length, synced, failed };
 }

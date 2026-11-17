@@ -80,20 +80,24 @@ export async function setPlaylistSaved(playlistId: string, saved: boolean): Prom
 }
 
 /** Admin only: pull every playlist + lesson from YouTube into the database right now. */
-export async function syncYouTubeNow(): Promise<{ ok: true; synced: number } | { ok: false; error: string }> {
+type SyncResult = { ok: true; found: number; synced: number; failed: string[] } | { ok: false; error: string };
+
+export async function syncYouTubeNow(): Promise<SyncResult> {
   const session = await getSession();
   if (!session || session.user.role !== "ADMIN") return { ok: false, error: "Not allowed." };
 
   try {
-    const synced = await syncAllPlaylists();
+    const { found, synced, failed } = await syncAllPlaylists();
     await db.auditLog.create({
       data: { actorUserId: session.user.id, action: "YOUTUBE_SYNC", resourceType: "PLAYLIST", resourceId: null },
     });
     revalidateTag("youtube"); // pages re-fetch the playlist list instead of using the hourly cache
     revalidatePath("/", "layout");
-    return { ok: true, synced };
+    return { ok: true, found, synced, failed };
   } catch (err) {
-    console.error("[sync] failed:", (err as Error).message);
-    return { ok: false, error: "Sync failed. Check the YouTube API key." };
+    const message = (err as Error).message;
+    console.error("[sync] failed:", message);
+    // Admin-only screen: show the real reason (never contains the API key).
+    return { ok: false, error: `Sync failed: ${message}` };
   }
 }
