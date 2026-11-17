@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 
 type Props = {
   youtubePlaylistId: string;
-  playlistDbId: string;
+  playlistDbId: string | null; // null when the playlist has no public videos saved yet
   title: string;
   category: string;
   lessons: SyncedLesson[];
@@ -91,10 +91,12 @@ export function PlaylistPlayer({
   }
 
   function toggleSave() {
+    const id = playlistDbId;
+    if (!id) return;
     const next = !saved;
     setSaved(next);
     startSave(async () => {
-      const res = await setPlaylistSaved(playlistDbId, next);
+      const res = await setPlaylistSaved(id, next);
       if (!res.ok) {
         setSaved(!next);
         setError(res.error);
@@ -111,7 +113,7 @@ export function PlaylistPlayer({
           <h1 className="font-display text-[32px] font-bold leading-tight sm:text-[42px]">{title}</h1>
           <p className="font-mono text-sm text-text-faint">{total} lessons</p>
         </div>
-        {signedIn ? (
+        {signedIn && playlistDbId ? (
           <button
             type="button"
             onClick={toggleSave}
@@ -127,6 +129,12 @@ export function PlaylistPlayer({
           </button>
         ) : null}
       </div>
+
+      {total === 0 && (
+        <p role="status" className="mb-6 rounded-xl border border-amber-300/40 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
+          Lessons for this playlist will appear here as soon as its videos are public on YouTube.
+        </p>
+      )}
 
       {/* progress bar */}
       {signedIn && total > 0 && (
