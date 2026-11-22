@@ -128,7 +128,6 @@ type PlaylistItemsResponse = {
       thumbnails?: Thumbs;
       resourceId: { videoId: string };
     };
-    contentDetails?: { videoPublishedAt?: string };
     status?: { privacyStatus: string };
   }[];
 };
@@ -172,7 +171,7 @@ export async function getPlaylist(
       const data: PlaylistItemsResponse = await yt<PlaylistItemsResponse>(
         "playlistItems",
         {
-          part: "snippet,contentDetails,status",
+          part: "snippet,status",
           playlistId,
           maxResults: "50",
           ...(pageToken ? { pageToken } : {}),
@@ -187,15 +186,12 @@ export async function getPlaylist(
           description: it.snippet.description,
           thumbnail: bestThumb(it.snippet.thumbnails),
           position: it.snippet.position,
-          // When the video itself went public (not when it was added to the playlist)
-          publishedAt: it.contentDetails?.videoPublishedAt ?? it.snippet.publishedAt,
+          publishedAt: it.snippet.publishedAt,
         });
       }
       pageToken = data.nextPageToken;
     } while (pageToken);
-    // Course order: oldest video first, newest at the bottom — whatever order the
-    // YouTube playlist uses (it may add new videos to the top). Ties keep playlist order.
-    videos.sort((a, b) => a.publishedAt.localeCompare(b.publishedAt) || a.position - b.position);
+    videos.sort((a, b) => a.position - b.position);
     return { playlist, videos };
   } catch (err) {
     console.error("[youtube] playlist items failed:", (err as Error).message);
