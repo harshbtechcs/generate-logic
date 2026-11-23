@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Shuffle } from "lucide-react";
-import { getSession } from "@/lib/session";
+import { getSession, isAdmin } from "@/lib/session";
 import { getQuizTools } from "@/lib/quiz/tools";
 import { getUserQuizBests } from "@/lib/quiz/stats";
 import { toneStyles } from "@/lib/data";
@@ -20,6 +20,8 @@ export default async function QuizPage() {
   const tools = getQuizTools();
   const session = await getSession();
   const bests = session ? await getUserQuizBests(session.user.id) : new Map();
+  // Only the admin sees how many questions each bank holds.
+  const admin = session ? isAdmin(session.user) : false;
 
   return (
     <>
@@ -64,9 +66,10 @@ export default async function QuizPage() {
                       <span className="text-text-muted">
                         Best <span className="font-mono text-brand-teal">{best.bestPercent}%</span> · {best.attempts}{" "}
                         {best.attempts === 1 ? "try" : "tries"}
+                        {admin && <span className="text-text-faint"> · {t.questionCount} in bank</span>}
                       </span>
                     ) : (
-                      <span className="text-text-faint">{t.questionCount} questions in bank</span>
+                      <span className="text-text-faint">{admin ? `${t.questionCount} questions in bank` : "10 questions · 10s each"}</span>
                     )}
                     <ArrowRight size={16} className="text-brand-teal" aria-hidden="true" />
                   </div>
