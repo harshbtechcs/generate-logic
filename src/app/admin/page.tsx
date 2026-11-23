@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, BadgeCheck, Brain, CheckCircle2, FileText, GraduationCap, ListVideo, PlayCircle, Shield, Users } from "lucide-react";
+import { Activity, BadgeCheck, Brain, CalendarCheck, CheckCircle2, FileText, GraduationCap, ListVideo, PlayCircle, Shield, SquareTerminal, Users } from "lucide-react";
+import { getActivityFeed } from "@/lib/admin-activity";
+import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { requireAdmin } from "@/lib/session";
 import { getAdminStats } from "@/lib/stats";
 import { getChannelPlaylists } from "@/lib/youtube";
@@ -15,7 +17,7 @@ const dateFmt = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short
 
 export default async function AdminPage() {
   await requireAdmin();
-  const [stats, playlists] = await Promise.all([getAdminStats(), getChannelPlaylists()]);
+  const [stats, playlists, feed] = await Promise.all([getAdminStats(), getChannelPlaylists(), getActivityFeed({ limit: 15 })]);
 
   return (
     <div className="mx-auto max-w-site px-5 pb-28 pt-12 sm:px-8">
@@ -32,6 +34,12 @@ export default async function AdminPage() {
           >
             <Users size={17} aria-hidden="true" /> Manage users
           </Link>
+          <Link
+            href="/admin/activity"
+            className="gl-btn inline-flex items-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/10 px-5 py-3 text-sm font-semibold text-teal-100"
+          >
+            <Activity size={17} aria-hidden="true" /> All activity
+          </Link>
           <SyncButton />
         </div>
       </Reveal>
@@ -44,9 +52,21 @@ export default async function AdminPage() {
         <StatCard icon={PlayCircle} label="Lessons in database" value={stats.lessons} delay={0.18} tone="text-blue-300" />
         <StatCard icon={CheckCircle2} label="Lessons completed (all users)" value={stats.completions} delay={0.2} tone="text-brand-green" />
         <StatCard icon={Brain} label="Quizzes taken (all users)" value={stats.quizzes} delay={0.22} tone="text-blue-300" />
+        <StatCard icon={CalendarCheck} label="Daily answers today" value={stats.dailyToday} delay={0.22} tone="text-amber-300" />
+        <StatCard icon={SquareTerminal} label="Terminal missions done" value={stats.missions} delay={0.22} tone="text-brand-green" />
         <StatCard icon={GraduationCap} label="Learning paths" value={stats.learningPaths} delay={0.2} tone="text-brand-green" />
         <StatCard icon={FileText} label="Uploaded notes" value={stats.notes} delay={0.25} tone="text-amber-300" />
       </section>
+
+      <Reveal className="mb-14">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <h2 className="font-display text-2xl font-semibold">Latest activity</h2>
+          <Link href="/admin/activity" className="text-sm text-brand-teal hover:underline">
+            See everything →
+          </Link>
+        </div>
+        <ActivityFeed events={feed} />
+      </Reveal>
 
       <Reveal>
         <h2 className="mb-4 font-display text-2xl font-semibold">Recent registrations</h2>
