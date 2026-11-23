@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, BadgeCheck, CheckCircle2, FileText, GraduationCap, ListVideo, PlayCircle, Shield, Users } from "lucide-react";
+import { Activity, BadgeCheck, Brain, CheckCircle2, FileText, GraduationCap, ListVideo, PlayCircle, Shield, Users } from "lucide-react";
 import { requireAdmin } from "@/lib/session";
 import { getAdminStats } from "@/lib/stats";
 import { getChannelPlaylists } from "@/lib/youtube";
@@ -43,6 +43,7 @@ export default async function AdminPage() {
         <StatCard icon={ListVideo} label="YouTube playlists" value={playlists.length} delay={0.15} />
         <StatCard icon={PlayCircle} label="Lessons in database" value={stats.lessons} delay={0.18} tone="text-blue-300" />
         <StatCard icon={CheckCircle2} label="Lessons completed (all users)" value={stats.completions} delay={0.2} tone="text-brand-green" />
+        <StatCard icon={Brain} label="Quizzes taken (all users)" value={stats.quizzes} delay={0.22} tone="text-blue-300" />
         <StatCard icon={GraduationCap} label="Learning paths" value={stats.learningPaths} delay={0.2} tone="text-brand-green" />
         <StatCard icon={FileText} label="Uploaded notes" value={stats.notes} delay={0.25} tone="text-amber-300" />
       </section>

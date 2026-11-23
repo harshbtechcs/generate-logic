@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { technologies } from "@/lib/data";
 import { site } from "@/lib/site";
+import { getQuizTools } from "@/lib/quiz/tools";
 
 // Served at /sitemap.xml — the list of public pages Google should index.
 // Rebuilt at most once an hour so new YouTube playlists get added automatically.
@@ -28,5 +29,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Individual playlist pages need sign-in, so they are not listed for search engines.
-  return [...pages, ...learn];
+  const quizzes: MetadataRoute.Sitemap = getQuizTools().map((t) => ({
+    url: `${base}/quiz/${t.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...pages, { url: `${base}/quiz`, changeFrequency: "weekly" as const, priority: 0.8 }, ...learn, ...quizzes];
 }

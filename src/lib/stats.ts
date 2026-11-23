@@ -44,7 +44,7 @@ export async function getUserStats(userId: string) {
 
 export async function getAdminStats() {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const [totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, recent] = await Promise.all([
+  const [totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, quizzes, recent] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { sessions: { some: { updatedAt: { gte: thirtyDaysAgo } } } } }),
     db.user.count({ where: { emailVerified: true } }),
@@ -53,6 +53,7 @@ export async function getAdminStats() {
     db.note.count(),
     db.lesson.count(),
     db.userProgress.count({ where: { completionStatus: "COMPLETED" } }),
+    db.quizAttempt.count(),
     db.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -68,5 +69,5 @@ export async function getAdminStats() {
       },
     }),
   ]);
-  return { totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, recent };
+  return { totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, quizzes, recent };
 }
