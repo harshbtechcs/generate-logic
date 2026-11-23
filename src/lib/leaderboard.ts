@@ -43,24 +43,24 @@ async function xpRows(since: Date): Promise<Row[]> {
     { id: string; full_name: string; show_on_leaderboard: boolean; quiz: number; lessons: number; daily: number; terminal: number }[]
   >`
     WITH q AS (
-      SELECT a.user_id, COUNT(DISTINCT ans.question_id)::int * ${XP.quizQuestion} AS xp
+      SELECT a.user_id, COUNT(DISTINCT ans.question_id)::int * ${XP.quizQuestion}::int AS xp
       FROM quiz_answers ans JOIN quiz_attempts a ON a.id = ans.attempt_id
-      WHERE ans.is_correct AND a.created_at >= ${since}
+      WHERE ans.is_correct AND a.created_at >= ${since}::timestamp
       GROUP BY a.user_id
     ), l AS (
-      SELECT user_id, COUNT(*)::int * ${XP.lesson} AS xp
+      SELECT user_id, COUNT(*)::int * ${XP.lesson}::int AS xp
       FROM user_progress
-      WHERE completion_status = 'COMPLETED' AND completed_at >= ${since}
+      WHERE completion_status = 'COMPLETED' AND completed_at >= ${since}::timestamp
       GROUP BY user_id
     ), d AS (
-      SELECT user_id, SUM(CASE WHEN is_correct THEN ${XP.dailyCorrect} ELSE ${XP.dailyTried} END)::int AS xp
+      SELECT user_id, SUM(CASE WHEN is_correct THEN ${XP.dailyCorrect}::int ELSE ${XP.dailyTried}::int END)::int AS xp
       FROM daily_answers
-      WHERE created_at >= ${since}
+      WHERE created_at >= ${since}::timestamp
       GROUP BY user_id
     ), t AS (
-      SELECT user_id, COUNT(*)::int * ${XP.mission} AS xp
+      SELECT user_id, COUNT(*)::int * ${XP.mission}::int AS xp
       FROM terminal_progress
-      WHERE completed_at >= ${since}
+      WHERE completed_at >= ${since}::timestamp
       GROUP BY user_id
     )
     SELECT u.id, u.full_name, u.show_on_leaderboard,
