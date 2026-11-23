@@ -43,7 +43,8 @@ export default async function AdminUsersPage({ searchParams }: Props) {
         emailVerified: true,
         accountStatus: true,
         createdAt: true,
-        _count: { select: { progress: { where: { completionStatus: "COMPLETED" } } } },
+        _count: { select: { progress: { where: { completionStatus: "COMPLETED" } }, quizAttempts: true, dailyAnswers: true, terminalProgress: true } },
+        sessions: { select: { updatedAt: true }, orderBy: { updatedAt: "desc" }, take: 1 },
       },
     }),
     db.user.count({ where }),
@@ -94,21 +95,25 @@ export default async function AdminUsersPage({ searchParams }: Props) {
       </div>
 
       <div className="overflow-x-auto rounded-[18px] border border-slate-400/15">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="w-full min-w-[1040px] text-left text-sm">
           <thead className="bg-white/[0.03] text-xs uppercase tracking-[0.1em] text-text-faint">
             <tr>
               <th scope="col" className="px-4 py-3 font-medium">Name</th>
               <th scope="col" className="px-4 py-3 font-medium">Email</th>
               <th scope="col" className="px-4 py-3 font-medium">Role</th>
               <th scope="col" className="px-4 py-3 font-medium">Status</th>
-              <th scope="col" className="px-4 py-3 font-medium">Lessons done</th>
+              <th scope="col" className="px-4 py-3 font-medium">Lessons</th>
+              <th scope="col" className="px-4 py-3 font-medium">Quizzes</th>
+              <th scope="col" className="px-4 py-3 font-medium">Daily</th>
+              <th scope="col" className="px-4 py-3 font-medium">Missions</th>
+              <th scope="col" className="px-4 py-3 font-medium">Last active</th>
               <th scope="col" className="px-4 py-3 font-medium">Joined</th>
             </tr>
           </thead>
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-text-muted">
+                <td colSpan={10} className="px-4 py-8 text-center text-text-muted">
                   No users found.
                 </td>
               </tr>
@@ -132,6 +137,10 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                   )}
                 </td>
                 <td className="px-4 py-3 font-mono">{u._count.progress}</td>
+                <td className="px-4 py-3 font-mono">{u._count.quizAttempts}</td>
+                <td className="px-4 py-3 font-mono">{u._count.dailyAnswers}</td>
+                <td className="px-4 py-3 font-mono">{u._count.terminalProgress}</td>
+                <td className="px-4 py-3 text-text-muted">{u.sessions[0] ? dateFmt.format(u.sessions[0].updatedAt) : "—"}</td>
                 <td className="px-4 py-3 text-text-muted">{dateFmt.format(u.createdAt)}</td>
               </tr>
             ))}

@@ -59,6 +59,14 @@ export function grade(questionId: string, selectedOptionId: string | null): Grad
   return { correct: selectedOptionId === correctOptionId, correctOptionId, explanation: q.explanation };
 }
 
+/** For admin views: the text of the option a user picked (null if unknown or no answer). */
+export function optionText(questionId: string, selectedOptionId: string | null): string | null {
+  const q = QUESTION_BY_ID.get(questionId);
+  if (!q || !selectedOptionId) return null;
+  const i = q.options.findIndex((_, idx) => optionId(q.id, idx) === selectedOptionId);
+  return i === -1 ? null : q.options[i]!;
+}
+
 /** What we know about a user's past answers: question id → was the latest answer correct? */
 export type History = Map<string, boolean>;
 

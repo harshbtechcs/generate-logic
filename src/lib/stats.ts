@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "./db";
+import { istDayKey } from "./ist";
 
 /** Consecutive days (ending today or yesterday) on which the user completed a lesson. */
 function streakFrom(days: Date[]) {
@@ -44,7 +45,7 @@ export async function getUserStats(userId: string) {
 
 export async function getAdminStats() {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const [totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, quizzes, recent] = await Promise.all([
+  const [totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, quizzes, recent, dailyToday, missions] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { sessions: { some: { updatedAt: { gte: thirtyDaysAgo } } } } }),
     db.user.count({ where: { emailVerified: true } }),
@@ -68,6 +69,8 @@ export async function getAdminStats() {
         accounts: { select: { providerId: true } },
       },
     }),
+    db.dailyAnswer.count({ where: { day: istDayKey() } }),
+    db.terminalProgress.count(),
   ]);
-  return { totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, quizzes, recent };
+  return { totalUsers, activeUsers, verifiedUsers, admins, learningPaths, notes, lessons, completions, quizzes, recent, dailyToday, missions };
 }
