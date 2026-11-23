@@ -11,20 +11,10 @@ import "server-only";
  * and a one-line explanation of WHY it is correct.
  */
 
-export type Level = "beginner" | "intermediate" | "advanced";
-export type Question = {
-  id: string;
-  tool: string;
-  level: Level;
-  question: string;
-  options: string[]; // options[0] is correct
-  explanation: string;
-};
+import { A, B, I, type Question, type Row } from "./types";
+import { awsRows } from "./questions/aws";
 
-type Row = [Level, string, string[], string];
-const B: Level = "beginner";
-const I: Level = "intermediate";
-const A: Level = "advanced";
+export type { Level, Question } from "./types";
 
 function bank(tool: string, rows: Row[]): Question[] {
   return rows.map(([level, question, options, explanation], i) => ({
@@ -91,23 +81,7 @@ const terraform = bank("terraform", [
   [A, "What is 'drift'?", ["Real infrastructure was changed outside Terraform, so it no longer matches the code", "A slow apply", "A provider upgrade", "A syntax error"], "terraform plan shows drift as changes it wants to make."],
 ]);
 
-const aws = bank("aws", [
-  [B, "Which AWS service provides virtual servers?", ["EC2", "S3", "RDS", "Route 53"], "EC2 = Elastic Compute Cloud."],
-  [B, "Which AWS service is object storage for files like images and backups?", ["S3", "EBS", "CloudWatch", "Route 53"], "S3 stores objects in buckets and is accessed over HTTPS."],
-  [B, "What is an AWS Region?", ["A geographic area containing multiple isolated Availability Zones", "A single data centre", "A subnet inside a VPC", "An IAM group"], "Example: ap-south-1 (Mumbai) has several AZs."],
-  [B, "Which service is AWS's managed relational database?", ["RDS", "DynamoDB", "S3", "ElastiCache"], "DynamoDB is NoSQL; RDS runs MySQL, PostgreSQL and others for you."],
-  [B, "Which service runs your code without you managing servers?", ["Lambda", "EC2", "EBS", "VPC"], "You upload a function; AWS runs it on demand and bills per request and duration."],
-  [I, "How do Security Groups and Network ACLs differ?", ["Security Groups are stateful and attach to instances; NACLs are stateless and apply to subnets", "NACLs are stateful and attach to instances", "They are identical", "Security Groups apply to the whole VPC only"], "Stateful means return traffic is allowed automatically."],
-  [I, "What is the best way to let an EC2 instance read from S3?", ["Attach an IAM role to the instance", "Put access keys in the application code", "Use the root account's keys", "Make the bucket public"], "Roles give temporary credentials that rotate automatically."],
-  [I, "What makes a subnet 'public'?", ["Its route table has a route to an Internet Gateway", "It has a 'public' tag", "It uses a NAT Gateway", "It has more IP addresses"], "Without that route, instances can't be reached from the internet."],
-  [I, "Which service lets instances in a private subnet reach the internet for updates without being reachable from it?", ["NAT Gateway", "Internet Gateway", "CloudFront", "Direct Connect"], "Outbound only: replies come back, new inbound connections don't."],
-  [I, "Which service spreads traffic across several EC2 instances?", ["Elastic Load Balancing (ALB / NLB)", "Route tables", "IAM", "CloudTrail"], "An ALB works at HTTP level; an NLB at TCP/UDP level."],
-  [I, "What does an Auto Scaling group do?", ["Adds or removes instances based on demand or a schedule", "Resizes S3 buckets", "Backs up RDS", "Rotates access keys"], "Combine it with a load balancer for a self-healing fleet."],
-  [I, "Which is block storage attached to an EC2 instance, like a disk?", ["EBS", "S3", "Glacier", "CloudFront"], "EBS volumes behave like hard disks; S3 is object storage."],
-  [I, "Which service is AWS's DNS?", ["Route 53", "CloudFront", "VPC", "Certificate Manager"], "Named after DNS's port 53."],
-  [A, "Which service records the API calls made in your account, for auditing?", ["CloudTrail", "CloudWatch", "Trusted Advisor", "X-Ray"], "CloudTrail answers 'who did what, and when'."],
-  [A, "What is the principle of least privilege?", ["Give only the permissions a task actually needs", "Give admin access to avoid errors", "Share one IAM user across the team", "Use the root user for automation"], "Smaller permissions mean a smaller blast radius if credentials leak."],
-]);
+const aws = bank("aws", awsRows);
 
 const linux = bank("linux", [
   [B, "Which command prints the current directory?", ["pwd", "cd", "ls", "whoami"], "pwd = print working directory."],
