@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarCheck, Check, Flame, Loader2, Trophy, Users, X } from "lucide-react";
+import { CalendarCheck, Check, Copy, Flame, Loader2, MessageCircle, Share2, Trophy, Users, X } from "lucide-react";
+import { Confetti } from "@/components/ui/Confetti";
 import { answerDaily } from "@/app/actions/engage";
 import type { DailyState } from "@/lib/daily";
 import { cn } from "@/lib/cn";
@@ -41,12 +42,67 @@ function NextIn({ at }: { at: number }) {
   );
 }
 
+const LAUNCH = Date.parse("2026-11-23T00:00:00Z");
+
+/** Share today's result — like Wordle, no spoilers. */
+function ShareResult({ day, correct, streak }: { day: string; correct: boolean; streak: number }) {
+  const [copied, setCopied] = useState(false);
+  const n = Math.max(1, Math.round((Date.parse(`${day}T00:00:00Z`) - LAUNCH) / 86_400_000) + 1);
+  const url = "https://generatelogic.in/daily";
+  const text = `Generate Logic Daily DevOps #${n} ${correct ? "✅" : "❌"}${streak > 1 ? ` · 🔥 ${streak}-day streak` : ""}\nCan you get today's question right?`;
+  const full = `${text}\n${url}`;
+
+  async function share() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ text, url });
+        return;
+      } catch {
+        /* cancelled — fall back to copy */
+      }
+    }
+    await copy();
+  }
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(full);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked */
+    }
+  }
+  const btn = "inline-flex items-center gap-2 rounded-lg border border-slate-400/25 px-3 py-2 text-sm hover:border-brand-teal/60 hover:text-brand-teal";
+  return (
+    <div className="rounded-xl border border-slate-400/15 bg-ink-900/40 p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <Share2 size={16} className="text-brand-teal" aria-hidden="true" /> Challenge your friends
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <a className={btn} href={`https://wa.me/?text=${encodeURIComponent(full)}`} target="_blank" rel="noopener noreferrer">
+          <MessageCircle size={15} aria-hidden="true" /> WhatsApp
+        </a>
+        <a className={btn} href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
+          <span aria-hidden="true" className="font-bold">in</span> LinkedIn
+        </a>
+        <a className={btn} href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(full)}`} target="_blank" rel="noopener noreferrer">
+          <span aria-hidden="true" className="font-bold">𝕏</span> Post
+        </a>
+        <button type="button" className={btn} onClick={() => void share()}>
+          {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />} {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function DailyChallenge({ state, signedIn, nextAt }: { state: DailyState; signedIn: boolean; nextAt: number }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [picked, setPicked] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [local, setLocal] = useState<DailyState["answer"]>(null);
+  const [burst, setBurst] = useState(0);
   const answer = state.answer ?? local;
   const q = state.question;
 
@@ -62,6 +118,7 @@ export function DailyChallenge({ state, signedIn, nextAt }: { state: DailyState;
         return;
       }
       setLocal({ optionId, correct: res.correct, correctOptionId: res.correctOptionId, explanation: res.explanation });
+      if (res.correct) setBurst((b) => b + 1);
       router.refresh(); // pull in the new streak and today's stats
     });
   }
@@ -70,6 +127,7 @@ export function DailyChallenge({ state, signedIn, nextAt }: { state: DailyState;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <Confetti fire={burst} />
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -149,6 +207,7 @@ export function DailyChallenge({ state, signedIn, nextAt }: { state: DailyState;
                 <strong>{answer.correct ? "Correct! +30 XP. " : "Not quite — +10 XP for showing up. "}</strong>
                 {answer.explanation}
               </div>
+              <ShareResult day={state.day} correct={answer.correct} streak={state.streak} />
               <p className="text-sm text-text-muted">
                 Next challenge in <NextIn at={nextAt} /> · come back tomorrow to keep your streak going.
               </p>

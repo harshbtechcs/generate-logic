@@ -13,8 +13,8 @@ export type Range = "week" | "all";
 export type XpBreakdown = { quiz: number; lessons: number; daily: number; terminal: number };
 type Row = XpBreakdown & { id: string; name: string; visible: boolean; total: number };
 
-export type LeaderEntry = { rank: number; id: string; name: string; initials: string; total: number } & XpBreakdown;
-export type MyStanding = { rank: number | null; total: number; visible: boolean; ofTotal: number; toNext: number | null } & XpBreakdown;
+export type LeaderEntry = { rank: number; id: string; name: string; initials: string; total: number; allTime: number } & XpBreakdown;
+export type MyStanding = { rank: number | null; total: number; allTime: number; visible: boolean; ofTotal: number; toNext: number | null } & XpBreakdown;
 
 /** "Harsh Yadav" → "Harsh Y." — the leaderboard never shows full names or emails. */
 export function publicName(fullName: string) {
@@ -82,7 +82,10 @@ async function xpRows(since: Date): Promise<Row[]> {
 
 /** Top learners for the period, plus where the signed-in user stands (even if they're not in the top list). */
 export async function getLeaderboard(range: Range, userId: string | null, limit = 20) {
-  const rows = (await xpRows(rangeStart(range))).filter((r) => r.total > 0);
+  const [periodRows, allRows] = await Promise.all([xpRows(rangeStart(range)), range === "all" ? Promise.resolve(null) : xpRows(new Date(0))]);
+  const rows = periodRows.filter((r) => r.total > 0);
+  // All-time XP decides each learner's level, even on the weekly board.
+  const allTime = new Map((allRows ?? periodRows).map((r) => [r.id, r.total]));
   const visible = rows.filter((r) => r.visible).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
   // Standard competition ranking: equal XP → equal rank.
@@ -90,7 +93,7 @@ export async function getLeaderboard(range: Range, userId: string | null, limit 
   visible.forEach((r, i) => {
     const prev = ranked[i - 1];
     const rank = prev && prev.total === r.total ? prev.rank : i + 1;
-    ranked.push({ rank, id: r.id, name: r.name, initials: initials(r.name), total: r.total, quiz: r.quiz, lessons: r.lessons, daily: r.daily, terminal: r.terminal });
+    ranked.push({ rank, id: r.id, name: r.name, initials: initials(r.name), total: r.total, allTime: allTime.get(r.id) ?? r.total, quiz: r.quiz, lessons: r.lessons, daily: r.daily, terminal: r.terminal });
   });
 
   let me: MyStanding | null = null;
@@ -103,6 +106,7 @@ export async function getLeaderboard(range: Range, userId: string | null, limit 
     me = {
       rank,
       total,
+      allTime: allTime.get(userId) ?? total,
       visible: mine?.visible ?? true,
       ofTotal: visible.length + (mine && !mine.visible ? 1 : 0),
       toNext: next === null ? null : next - total,

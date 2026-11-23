@@ -15,6 +15,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [dailyPending, setDailyPending] = useState(false);
   const { data: session, isPending } = useSession();
   const user = session?.user;
 
@@ -24,6 +25,25 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Reminder dot on "Practice" until today's daily challenge is answered.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) {
+      setDailyPending(false);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/me/daily", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { signedIn?: boolean; doneToday?: boolean } | null) => {
+        if (!cancelled) setDailyPending(!!d?.signedIn && !d.doneToday);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, pathname]);
 
   // Close the mobile menu after navigating.
   useEffect(() => setOpen(false), [pathname]);
@@ -70,6 +90,9 @@ export function Navbar() {
                   )}
                 >
                   {l.label}
+                  {l.href === "/practice" && dailyPending && (
+                    <span className="absolute -right-2.5 top-1 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" aria-label="Today's challenge is waiting" />
+                  )}
                   <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-brand-teal transition-transform duration-300 group-hover:scale-x-100" />
                 </Link>
               </li>
@@ -130,8 +153,9 @@ export function Navbar() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.04 * i }}
                 >
-                  <Link href={l.href} className="block py-3 text-base text-text-muted hover:text-brand-teal">
+                  <Link href={l.href} className="flex items-center gap-2 py-3 text-base text-text-muted hover:text-brand-teal">
                     {l.label}
+                    {l.href === "/practice" && dailyPending && <span className="rounded-full bg-amber-300/20 px-2 py-0.5 text-[11px] text-amber-100">Daily waiting</span>}
                   </Link>
                 </motion.li>
               ))}

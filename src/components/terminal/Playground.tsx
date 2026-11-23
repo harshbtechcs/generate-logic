@@ -8,6 +8,7 @@ import { complete, displayPath, ERR, initialState, OK, run, WARN, type SimState 
 import { TRACKS, type Track } from "@/lib/terminal/missions";
 import { completeMissions } from "@/app/actions/engage";
 import { cn } from "@/lib/cn";
+import { Confetti } from "@/components/ui/Confetti";
 
 type Line = { kind: "cmd" | "out" | "sys"; text: string; prompt?: string };
 
@@ -51,6 +52,8 @@ function OutputLine({ line }: { line: Line }) {
   const first = line.text[0];
   const marker = first === ERR || first === OK || first === WARN ? first : null;
   const text = marker ? line.text.slice(1) : line.text;
+  // Folders (ending in /) in blue, like a real ls.
+  const parts = marker ? [text] : text.split(/(\S+\/)(?=\s|$)/);
   return (
     <div
       className={cn(
@@ -61,7 +64,17 @@ function OutputLine({ line }: { line: Line }) {
         !marker && "text-slate-300",
       )}
     >
-      {text || " "}
+      {text
+        ? parts.map((part, i) =>
+            i % 2 === 1 ? (
+              <span key={i} className="font-semibold text-blue-300">
+                {part}
+              </span>
+            ) : (
+              part
+            ),
+          )
+        : "\u00a0"}
     </div>
   );
 }
@@ -75,6 +88,7 @@ export function Playground({ signedIn, savedDone, startTool }: { signedIn: boole
   const [done, setDone] = useState<Set<string>>(() => new Set(savedDone));
   const [celebrate, setCelebrate] = useState<{ title: string; learn: string } | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [burst, setBurst] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -107,6 +121,7 @@ export function Playground({ signedIn, savedDone, startTool }: { signedIn: boole
         return next;
       });
       setCelebrate(titles);
+      setBurst((b) => b + 1);
       setShowHint(false);
       if (signedIn) void completeMissions(ids);
     },
@@ -176,6 +191,7 @@ export function Playground({ signedIn, savedDone, startTool }: { signedIn: boole
 
   return (
     <div className="flex flex-col gap-5">
+      <Confetti fire={burst} count={45} />
       <div role="tablist" aria-label="Choose a track" className="flex flex-wrap gap-2">
         {TRACKS.map((t) => {
           const n = t.missions.filter((m) => done.has(m.id)).length;
@@ -317,7 +333,28 @@ export function Playground({ signedIn, savedDone, startTool }: { signedIn: boole
               </div>
             </div>
           </div>
-          <p className="mt-2 text-xs text-text-faint">↑/↓ history · Tab autocomplete · Ctrl+L clear · commands can be chained with &amp;&amp;</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {[
+              { label: "Tab", run: () => setInput((v) => complete(sim, v)) },
+              { label: "↑", run: () => onKeyDown({ key: "ArrowUp", preventDefault() {} } as React.KeyboardEvent<HTMLInputElement>) },
+              { label: "↓", run: () => onKeyDown({ key: "ArrowDown", preventDefault() {} } as React.KeyboardEvent<HTMLInputElement>) },
+              { label: "clear", run: () => setLines([]) },
+              { label: "help", run: () => submit("help") },
+            ].map((k) => (
+              <button
+                key={k.label}
+                type="button"
+                onClick={() => {
+                  k.run();
+                  inputRef.current?.focus();
+                }}
+                className="rounded-md border border-slate-400/25 bg-white/[0.03] px-2.5 py-1 font-mono text-xs text-text-muted hover:border-brand-teal/50 hover:text-text"
+              >
+                {k.label}
+              </button>
+            ))}
+            <span className="ml-auto hidden text-xs text-text-faint sm:inline">↑/↓ history · Tab autocomplete · Ctrl+L clear · chain with &amp;&amp; · pipe with |</span>
+          </div>
 
           <AnimatePresence>
             {celebrate && (

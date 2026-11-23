@@ -6,6 +6,8 @@ import { getLeaderboard, XP, type Range } from "@/lib/leaderboard";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/cn";
+import { LEVEL_TONES, levelFor } from "@/lib/levels";
+import { LevelChip } from "@/components/progress/Badges";
 
 export const metadata: Metadata = {
   title: "Leaderboard",
@@ -87,6 +89,10 @@ export default async function LeaderboardPage({ searchParams }: Props) {
                     {e.rank === 1 ? <Crown size={26} aria-hidden="true" /> : <Medal size={24} aria-hidden="true" />}
                     <span className="flex h-14 w-14 items-center justify-center rounded-full border border-current bg-ink-900/60 font-display text-lg font-bold">{e.initials}</span>
                     <span className="font-semibold text-text">{e.name}</span>
+                    {(() => {
+                      const lv = levelFor(e.allTime);
+                      return <LevelChip level={lv.level} name={lv.name} tone={LEVEL_TONES[lv.level - 1]!} />;
+                    })()}
                     <span className="font-mono text-sm">
                       #{e.rank} · {e.total} XP
                     </span>
@@ -118,6 +124,12 @@ export default async function LeaderboardPage({ searchParams }: Props) {
                               <span className="font-medium">
                                 {e.name}
                                 {isMe && <span className="ml-2 rounded-full bg-brand-teal/20 px-2 py-0.5 text-[11px] text-teal-100">You</span>}
+                                <span className="ml-2 hidden sm:inline">
+                                  {(() => {
+                                    const lv = levelFor(e.allTime);
+                                    return <LevelChip level={lv.level} name={lv.name} tone={LEVEL_TONES[lv.level - 1]!} />;
+                                  })()}
+                                </span>
                               </span>
                             </span>
                           </td>
@@ -153,6 +165,21 @@ export default async function LeaderboardPage({ searchParams }: Props) {
                   <div className="mt-1 text-sm text-text-faint">{me.rank ? `of ${me.ofTotal}` : "not ranked yet"}</div>
                 </div>
               </div>
+              {(() => {
+                const lv = levelFor(me.allTime);
+                return (
+                  <div className="mt-5 rounded-xl border border-slate-400/15 bg-ink-900/40 p-3">
+                    <div className="mb-1.5 flex items-center justify-between text-sm">
+                      <LevelChip level={lv.level} name={lv.name} tone={LEVEL_TONES[lv.level - 1]!} />
+                      <span className="font-mono text-xs text-text-faint">{lv.next ? `${me.allTime}/${lv.next} XP` : "Max level"}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-400" style={{ width: `${lv.progress}%` }} />
+                    </div>
+                    {lv.nextName && <p className="mt-1.5 text-xs text-text-faint">{lv.next! - me.allTime} XP to {lv.nextName}</p>}
+                  </div>
+                );
+              })()}
               {me.toNext !== null && me.rank !== 1 && (
                 <p className="mt-4 rounded-lg bg-white/[0.04] px-3 py-2 text-sm">
                   <strong className="text-brand-teal">{me.toNext} XP</strong> more to move up a place.
