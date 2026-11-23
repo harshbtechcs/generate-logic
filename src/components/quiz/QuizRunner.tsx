@@ -77,7 +77,8 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
   const [elapsed, setElapsed] = useState(0);
   const [loading, startLoading] = useTransition();
   const [checking, setChecking] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
+  // Countdown belongs to one question id, so a finished timer can never leak into the next question.
+  const [timer, setTimer] = useState<{ qid: string; left: number } | null>(null);
   const startedAt = useRef(0);
   // Set once the current question is answered or has timed out, so the two can't both happen.
   const lockRef = useRef(false);
@@ -100,6 +101,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
       setQuestions(res.questions);
       setAnswers({});
       setIndex(0);
+      setTimer(null);
       setResult(null);
       setElapsed(0);
       startedAt.current = Date.now();
@@ -139,24 +141,29 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
     if (g) setAnswers((a) => ({ ...a, [q.id]: { optionId: null, grade: g, timedOut: true } }));
   }, [q, answers]);
 
-  // 10-second countdown for each new question
+  // 10-second countdown: starts when a question appears (after Start / Next)
+  // and stops as soon as it is answered.
   const qid = q?.id;
+  const answered = !!current;
   useEffect(() => {
-    if (phase !== "playing" || !qid) return;
+    if (phase !== "playing" || !qid || answered) return;
     lockRef.current = false;
     const deadline = Date.now() + QUESTION_SECONDS * 1000;
-    setTimeLeft(QUESTION_SECONDS);
+    setTimer({ qid, left: QUESTION_SECONDS });
     const t = setInterval(() => {
       const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
-      setTimeLeft(left);
+      setTimer({ qid, left });
       if (left === 0) clearInterval(t);
     }, 200);
     return () => clearInterval(t);
-  }, [phase, qid]);
+  }, [phase, qid, answered]);
+
+  // Seconds left for the question on screen (full time until its own timer starts).
+  const timeLeft = timer && timer.qid === qid ? timer.left : QUESTION_SECONDS;
 
   useEffect(() => {
-    if (phase === "playing" && timeLeft === 0 && !current) void timeUp();
-  }, [phase, timeLeft, current, timeUp]);
+    if (phase === "playing" && timer && timer.qid === qid && timer.left === 0 && !current) void timeUp();
+  }, [phase, timer, qid, current, timeUp]);
 
   const finish = useCallback(() => {
     const duration = Math.max(0, Math.floor((Date.now() - startedAt.current) / 1000));
