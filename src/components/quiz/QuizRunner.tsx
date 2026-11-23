@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Clock, Loader2, RotateCcw, Trophy, X } from "lucide-react";
+import { ArrowRight, Check, Clock, Loader2, RotateCcw, Timer, Trophy, X } from "lucide-react";
 import { checkAnswer, startQuiz, submitQuiz, type SubmitResult } from "@/app/actions/quiz";
 import type { Grade, PublicQuestion } from "@/lib/quiz/engine";
 import { useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
 
-type Answer = { optionId: string; grade: Grade };
+type Answer = { optionId: string | null; grade: Grade; timedOut?: boolean };
+
+const QUESTION_SECONDS = 10;
 type Phase = "intro" | "playing" | "done";
 
 const levelStyle: Record<string, string> = {
@@ -29,6 +31,39 @@ function formatTime(sec: number) {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 }
 
+/** Circular 10-second countdown shown beside each question. */
+function Countdown({ seconds, frozen }: { seconds: number; frozen: boolean }) {
+  const r = 20;
+  const c = 2 * Math.PI * r;
+  const color = frozen ? "#64748B" : seconds <= 3 ? "#F87171" : seconds <= 5 ? "#FBBF24" : "#5EEAD4";
+  return (
+    <div
+      role="timer"
+      aria-label={`${seconds} seconds left`}
+      className={cn("relative h-14 w-14 shrink-0", !frozen && seconds <= 3 && seconds > 0 && "animate-pulse")}
+    >
+      <svg viewBox="0 0 48 48" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="24" cy="24" r={r} fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="4" />
+        <circle
+          cx="24"
+          cy="24"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - seconds / QUESTION_SECONDS)}
+          style={{ transition: "stroke-dashoffset 0.25s linear, stroke 0.3s" }}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center font-mono text-lg font-semibold" style={{ color }}>
+        {seconds}
+      </span>
+    </div>
+  );
+}
+
 export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolName: string; learnHref: string | null }) {
   const { data: session } = useSession();
   const signedIn = !!session;
@@ -42,7 +77,10 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
   const [elapsed, setElapsed] = useState(0);
   const [loading, startLoading] = useTransition();
   const [checking, setChecking] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
   const startedAt = useRef(0);
+  // Set once the current question is answered or has timed out, so the two can't both happen.
+  const lockRef = useRef(false);
 
   // Timer while playing
   useEffect(() => {
@@ -76,18 +114,49 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
 
   const choose = useCallback(
     async (optionId: string) => {
-      if (!q || answers[q.id] || checking) return;
+      if (!q || answers[q.id] || lockRef.current) return;
+      lockRef.current = true;
       setChecking(true);
       const g = await checkAnswer(q.id, optionId);
       setChecking(false);
       if (!g) {
+        lockRef.current = false;
         setError("Could not check that answer. Please try again.");
         return;
       }
       setAnswers((a) => ({ ...a, [q.id]: { optionId, grade: g } }));
     },
-    [q, answers, checking],
+    [q, answers],
   );
+
+  // Time ran out: count it as unanswered and reveal the right answer.
+  const timeUp = useCallback(async () => {
+    if (!q || answers[q.id] || lockRef.current) return;
+    lockRef.current = true;
+    setChecking(true);
+    const g = await checkAnswer(q.id, null);
+    setChecking(false);
+    if (g) setAnswers((a) => ({ ...a, [q.id]: { optionId: null, grade: g, timedOut: true } }));
+  }, [q, answers]);
+
+  // 10-second countdown for each new question
+  const qid = q?.id;
+  useEffect(() => {
+    if (phase !== "playing" || !qid) return;
+    lockRef.current = false;
+    const deadline = Date.now() + QUESTION_SECONDS * 1000;
+    setTimeLeft(QUESTION_SECONDS);
+    const t = setInterval(() => {
+      const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimeLeft(left);
+      if (left === 0) clearInterval(t);
+    }, 200);
+    return () => clearInterval(t);
+  }, [phase, qid]);
+
+  useEffect(() => {
+    if (phase === "playing" && timeLeft === 0 && !current) void timeUp();
+  }, [phase, timeLeft, current, timeUp]);
 
   const finish = useCallback(() => {
     const duration = Math.max(0, Math.floor((Date.now() - startedAt.current) / 1000));
@@ -116,12 +185,12 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const n = Number(e.key);
-      if (n >= 1 && n <= q.options.length && !current) void choose(q.options[n - 1]!.id);
+      if (n >= 1 && n <= q.options.length && !current && timeLeft > 0) void choose(q.options[n - 1]!.id);
       if (e.key === "Enter" && current) next();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, q, current, choose, next]);
+  }, [phase, q, current, choose, next, timeLeft]);
 
   /* ───────────── intro ───────────── */
   if (phase === "intro") {
@@ -135,6 +204,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
         <h1 className="mt-3 font-display text-[34px] font-bold leading-tight sm:text-[42px]">{toolName}</h1>
         <ul className="mx-auto mt-6 flex max-w-md flex-col gap-2 text-left text-[15px] text-text-muted">
           <li className="flex gap-2"><Check size={18} className="mt-0.5 shrink-0 text-brand-green" aria-hidden="true" /> 10 questions, from beginner to advanced</li>
+          <li className="flex gap-2"><Timer size={18} className="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" /> 10 seconds per question — when time runs out, it counts as wrong</li>
           <li className="flex gap-2"><Check size={18} className="mt-0.5 shrink-0 text-brand-green" aria-hidden="true" /> Instant answer with a short explanation</li>
           <li className="flex gap-2"><Check size={18} className="mt-0.5 shrink-0 text-brand-green" aria-hidden="true" /> New questions every time — ones you have not seen come first</li>
         </ul>
@@ -261,7 +331,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
                   </p>
                   <p className={cn("mt-2 text-sm", ok ? "text-green-200" : "text-red-200")}>
                     {ok ? <Check size={14} className="mr-1 inline" aria-hidden="true" /> : <X size={14} className="mr-1 inline" aria-hidden="true" />}
-                    Your answer: {chosen?.text ?? "No answer"}
+                    Your answer: {chosen?.text ?? (a?.timedOut ? "No answer (time ran out)" : "No answer")}
                   </p>
                   {!ok && right && <p className="mt-1 text-sm text-green-200">Correct: {right.text}</p>}
                   {a && <p className="mt-2 text-sm text-text-muted">{a.grade.explanation}</p>}
@@ -305,8 +375,13 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
           transition={{ duration: 0.3 }}
           className="rounded-[24px] border border-slate-400/15 bg-ink-800/60 p-6 sm:p-8"
         >
-          <span className={cn("inline-block rounded-full border px-2.5 py-1 text-xs font-medium capitalize", levelStyle[q.level])}>{q.level}</span>
-          <h1 className="mt-4 font-display text-[22px] font-semibold leading-snug sm:text-[26px]">{q.question}</h1>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <span className={cn("inline-block rounded-full border px-2.5 py-1 text-xs font-medium capitalize", levelStyle[q.level])}>{q.level}</span>
+              <h1 className="mt-4 font-display text-[22px] font-semibold leading-snug sm:text-[26px]">{q.question}</h1>
+            </div>
+            <Countdown seconds={timeLeft} frozen={!!current} />
+          </div>
 
           <div className="mt-6 flex flex-col gap-3" role="group" aria-label="Answer options">
             {q.options.map((o, i) => {
@@ -317,7 +392,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
                   key={o.id}
                   type="button"
                   onClick={() => void choose(o.id)}
-                  disabled={!!current || checking}
+                  disabled={!!current || checking || timeLeft === 0}
                   aria-pressed={picked}
                   className={cn(
                     "flex w-full items-start gap-3 rounded-xl border px-4 py-3.5 text-left text-[15px] transition-colors",
@@ -348,7 +423,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
                     current.grade.correct ? "border-green-400/40 bg-green-400/10 text-green-100" : "border-red-400/40 bg-red-400/10 text-red-100",
                   )}
                 >
-                  <strong>{current.grade.correct ? "Correct! " : "Not quite. "}</strong>
+                  <strong>{current.timedOut ? "Time's up! " : current.grade.correct ? "Correct! " : "Not quite. "}</strong>
                   {current.grade.explanation}
                 </div>
                 <button
