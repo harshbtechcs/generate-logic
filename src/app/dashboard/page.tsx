@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookMarked, BookOpenCheck, Brain, CheckCircle2, Flame, GraduationCap, ListVideo, PieChart, PlayCircle, Settings, Shield, Target, Trophy } from "lucide-react";
+import { ArrowRight, BookMarked, BookOpenCheck, Brain, CalendarCheck, CheckCircle2, Flame, GraduationCap, ListVideo, Map as MapIcon, PieChart, PlayCircle, Settings, Shield, SquareTerminal, Target, Trophy } from "lucide-react";
 import { requireUser, isAdmin } from "@/lib/session";
 import { getUserStats } from "@/lib/stats";
 import { getRecentActivity, getUserCourses } from "@/lib/learning";
 import { getUserQuizSummary } from "@/lib/quiz/stats";
+import { getLeaderboard } from "@/lib/leaderboard";
+import { getDailyStreak } from "@/lib/daily";
+import { getRoadmap } from "@/lib/roadmap";
+import { TRACKS } from "@/lib/terminal/missions";
+import { db } from "@/lib/db";
 import { CourseCard } from "@/components/dashboard/CourseCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Reveal } from "@/components/ui/Reveal";
@@ -20,12 +25,18 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export default async function DashboardPage({ searchParams }: Props) {
   const user = await requireUser("/dashboard");
-  const [stats, courses, activity, quiz] = await Promise.all([
+  const [stats, courses, activity, quiz, board, daily, roadmap, missionsDone] = await Promise.all([
     getUserStats(user.id),
     getUserCourses(user.id),
     getRecentActivity(user.id),
     getUserQuizSummary(user.id),
+    getLeaderboard("week", user.id, 3),
+    getDailyStreak(user.id),
+    getRoadmap(user.id),
+    db.terminalProgress.count({ where: { userId: user.id } }),
   ]);
+  const totalMissions = TRACKS.reduce((n, t) => n + t.missions.length, 0);
+  const me = board.me;
   const sp = await searchParams;
   const firstName = user.name.split(" ")[0];
 
@@ -56,6 +67,48 @@ export default async function DashboardPage({ searchParams }: Props) {
         )}
         </div>
       </Reveal>
+
+      <section aria-label="Your progress" className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <ProgressTile
+          href="/daily"
+          icon={daily.doneToday ? Flame : CalendarCheck}
+          tone="text-amber-300 border-amber-300/30 bg-amber-300/[0.06]"
+          title="Daily challenge"
+          big={`${daily.streak}`}
+          unit="day streak"
+          note={daily.doneToday ? "Done for today ✓ — come back tomorrow" : "Today's question is waiting →"}
+          highlight={!daily.doneToday}
+        />
+        <ProgressTile
+          href="/leaderboard"
+          icon={Trophy}
+          tone="text-orange-300 border-orange-400/30 bg-orange-400/[0.06]"
+          title="This week"
+          big={`${me?.total ?? 0}`}
+          unit="XP"
+          note={me?.rank ? `Rank #${me.rank} of ${me.ofTotal}${me.toNext ? ` · ${me.toNext} XP to move up` : ""}` : "Earn XP to get ranked"}
+        />
+        <ProgressTile
+          href="/roadmap"
+          icon={MapIcon}
+          tone="text-blue-300 border-blue-400/30 bg-blue-400/[0.06]"
+          title="DevOps roadmap"
+          big={`${roadmap.overall}`}
+          unit="% complete"
+          note={roadmap.next ? `Next up: ${roadmap.next.tech.name}` : "Roadmap complete 🎉"}
+          bar={roadmap.overall}
+        />
+        <ProgressTile
+          href="/terminal"
+          icon={SquareTerminal}
+          tone="text-green-300 border-green-400/30 bg-green-400/[0.06]"
+          title="Terminal missions"
+          big={`${missionsDone}`}
+          unit={`/ ${totalMissions}`}
+          note={missionsDone >= totalMissions ? "All missions done 🎉" : "Practise real commands →"}
+          bar={Math.round((missionsDone / totalMissions) * 100)}
+        />
+      </section>
 
       <section aria-label="Your statistics" className="mb-14 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
         <StatCard icon={GraduationCap} label="Enrolled learning paths" value={stats.enrollments} />
@@ -233,5 +286,53 @@ export default async function DashboardPage({ searchParams }: Props) {
         )}
       </section>
     </div>
+  );
+}
+
+function ProgressTile({
+  href,
+  icon: Icon,
+  tone,
+  title,
+  big,
+  unit,
+  note,
+  bar,
+  highlight,
+}: {
+  href: string;
+  icon: typeof Flame;
+  tone: string;
+  title: string;
+  big: string;
+  unit: string;
+  note: string;
+  bar?: number;
+  highlight?: boolean;
+}) {
+  return (
+    <Reveal>
+      <Link
+        href={href}
+        className={`gl-card group flex h-full flex-col gap-3 rounded-[18px] border p-5 ${tone} ${highlight ? "ring-1 ring-amber-300/50" : ""}`}
+      >
+        <span className="flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium text-text">
+            <Icon size={18} className="gl-ico" aria-hidden="true" /> {title}
+          </span>
+          <ArrowRight size={16} className="opacity-60 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+        </span>
+        <span className="flex items-baseline gap-1.5">
+          <span className="font-display text-[34px] font-bold leading-none text-text">{big}</span>
+          <span className="text-sm text-text-faint">{unit}</span>
+        </span>
+        {bar !== undefined && (
+          <span className="block h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+            <span className="block h-full rounded-full bg-gradient-to-r from-brand-green via-brand-cyan to-brand-blue" style={{ width: `${bar}%` }} />
+          </span>
+        )}
+        <span className="text-sm text-text-muted">{note}</span>
+      </Link>
+    </Reveal>
   );
 }

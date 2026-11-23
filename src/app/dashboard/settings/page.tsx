@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { publicName } from "@/lib/leaderboard";
+import { LeaderboardSection } from "@/components/settings/LeaderboardSection";
 import { ProfileSection, PasswordSection, SessionsSection, DeleteAccountSection } from "@/components/settings/SettingsSections";
 
 export const metadata: Metadata = { title: "Account settings", robots: { index: false } };
@@ -10,7 +12,10 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const user = await requireUser("/dashboard/settings");
-  const accounts = await db.account.findMany({ where: { userId: user.id }, select: { providerId: true } });
+  const [accounts, prefs] = await Promise.all([
+    db.account.findMany({ where: { userId: user.id }, select: { providerId: true } }),
+    db.user.findUnique({ where: { id: user.id }, select: { showOnLeaderboard: true } }),
+  ]);
   const hasPassword = accounts.some((a) => a.providerId === "credential");
   const hasGoogle = accounts.some((a) => a.providerId === "google");
 
@@ -26,6 +31,7 @@ export default async function SettingsPage() {
 
       <div className="flex flex-col gap-6">
         <ProfileSection name={user.name} email={user.email} image={user.image ?? null} hasGoogle={hasGoogle} />
+        <LeaderboardSection visible={prefs?.showOnLeaderboard ?? true} publicName={publicName(user.name)} />
         <PasswordSection hasPassword={hasPassword} />
         <SessionsSection />
         <DeleteAccountSection hasPassword={hasPassword} email={user.email} />
