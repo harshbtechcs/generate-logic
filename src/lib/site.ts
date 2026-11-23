@@ -12,11 +12,14 @@ export const site = {
 
 export const navLinks = [
   { label: "Home", href: "/" },
-  { label: "Learning Paths", href: "/#paths" },
+  { label: "Roadmap", href: "/roadmap" },
   { label: "Playlists", href: "/playlists" },
-  { label: "Quiz", href: "/quiz" },
+  { label: "Practice", href: "/practice" },
+  { label: "Leaderboard", href: "/leaderboard" },
   { label: "Notes", href: "/notes" },
   { label: "Projects", href: "/projects" },
-  { label: "Blog", href: "/blog" },
   { label: "About Us", href: "/about" },
 ] as const;
+
+/** Extra paths that highlight a nav item (e.g. /quiz lives under Practice). */
+export const navAlso: Record<string, string[]> = { "/practice": ["/quiz", "/daily", "/terminal"] };

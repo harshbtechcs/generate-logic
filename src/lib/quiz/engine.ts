@@ -44,6 +44,12 @@ export function toPublic(q: Question): PublicQuestion {
   };
 }
 
+/** Same as toPublic, but the option order is fixed (used where the page re-renders, e.g. the daily challenge). */
+export function toPublicStable(q: Question): PublicQuestion {
+  const options = q.options.map((text, i) => ({ id: optionId(q.id, i), text })).sort((a, b) => a.id.localeCompare(b.id));
+  return { id: q.id, tool: q.tool, level: q.level, question: q.question, options };
+}
+
 export type Grade = { correct: boolean; correctOptionId: string; explanation: string };
 
 export function grade(questionId: string, selectedOptionId: string | null): Grade | null {

@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { UserMenu } from "./UserMenu";
-import { navLinks } from "@/lib/site";
+import { navAlso, navLinks } from "@/lib/site";
 import { cn } from "@/lib/cn";
 
 export function Navbar() {
@@ -58,7 +58,8 @@ export function Navbar() {
 
         <ul className="hidden flex-1 items-center gap-6 lg:flex">
           {navLinks.map((l) => {
-            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href.replace("/#", "/"));
+            const active =
+              l.href === "/" ? pathname === "/" : [l.href, ...(navAlso[l.href] ?? [])].some((h) => pathname.startsWith(h));
             return (
               <li key={l.label}>
                 <Link

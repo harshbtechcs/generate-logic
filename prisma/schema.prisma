@@ -39,6 +39,8 @@ model User {
   profilePicture String?       @map("profile_picture") // Better Auth "image"
   role           Role          @default(STUDENT)
   accountStatus  AccountStatus @default(ACTIVE) @map("account_status")
+  // Shown on the public leaderboard (first name + last initial only). Users can turn this off in settings.
+  showOnLeaderboard Boolean    @default(true) @map("show_on_leaderboard")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
@@ -52,6 +54,8 @@ model User {
   projects      UserProject[]
   auditLogs     AuditLog[]
   quizAttempts  QuizAttempt[]
+  dailyAnswers  DailyAnswer[]
+  terminalProgress TerminalProgress[]
 
   @@map("users")
 }
@@ -370,4 +374,37 @@ model QuizAnswer {
 
   @@index([attemptId])
   @@map("quiz_answers")
+}
+
+// ─────────────────────────────── Daily challenge & terminal ───────────────────────────────
+
+// One answer per user per day. "day" is the India date (YYYY-MM-DD) the challenge belonged to.
+model DailyAnswer {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  day            String
+  questionId     String   @map("question_id")
+  selectedOption String?  @map("selected_option")
+  isCorrect      Boolean  @map("is_correct")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, day])
+  @@index([day])
+  @@map("daily_answers")
+}
+
+// Command Playground missions a user has finished (mission ids live in code).
+model TerminalProgress {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  missionId   String   @map("mission_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId])
+  @@index([completedAt])
+  @@map("terminal_progress")
 }

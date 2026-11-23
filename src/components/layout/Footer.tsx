@@ -22,10 +22,15 @@ export function Footer() {
 
         <Reveal delay={0.1} className="flex flex-[1_1_160px] flex-col gap-3 text-[15px]">
           <span className="text-[13px] font-semibold tracking-[0.12em] text-slate-500">LEARN</span>
+          <Link href="/roadmap" className={linkCls}>DevOps Roadmap</Link>
           <Link href="/#paths" className={linkCls}>Learning Paths</Link>
           <Link href="/playlists" className={linkCls}>Playlists</Link>
           <Link href="/notes" className={linkCls}>Notes</Link>
           <Link href="/projects" className={linkCls}>Projects</Link>
+          <Link href="/daily" className={linkCls}>Daily Challenge</Link>
+          <Link href="/quiz" className={linkCls}>Quizzes</Link>
+          <Link href="/terminal" className={linkCls}>Command Playground</Link>
+          <Link href="/blog" className={linkCls}>Blog</Link>
         </Reveal>
 
         <Reveal delay={0.2} className="flex flex-[1_1_220px] flex-col gap-3 text-[15px]">

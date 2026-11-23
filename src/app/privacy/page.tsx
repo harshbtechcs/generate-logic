@@ -35,8 +35,13 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Learning data:</strong> lessons you mark as complete, playlists you save, learning paths you are
-          enrolled in, your quiz answers and scores, and a history of recent activity (for example &ldquo;opened
+          enrolled in, your quiz answers and scores, your daily-challenge answers, the Command Playground missions you finish, and a history of recent activity (for example &ldquo;opened
           playlist&rdquo;), used to show your progress, streak and quiz results.
+        </li>
+        <li>
+          <strong>Leaderboard:</strong> if you earn XP, your first name and the first letter of your last name (for
+          example &ldquo;Harsh Y.&rdquo;) and your XP are shown on the public leaderboard. Your email is never shown.
+          You can hide yourself at any time in Settings.
         </li>
         <li>
           <strong>Sign-in sessions:</strong> a session record with the date, your IP address and browser type, used
