@@ -186,7 +186,46 @@ const ago = (s: SimState, t: number) => {
 
 /* ───────────────────────── main entry ───────────────────────── */
 
-export const COMMANDS = ["help", "clear", "pwd", "ls", "cd", "mkdir", "touch", "cat", "echo", "rm", "cp", "mv", "whoami", "date", "uname", "history", "git", "docker", "kubectl", "terraform"];
+export const COMMANDS = ["help", "clear", "pwd", "ls", "cd", "mkdir", "touch", "cat", "echo", "rm", "cp", "mv", "grep", "head", "tail", "wc", "chmod", "whoami", "date", "uname", "history", "git", "docker", "kubectl", "terraform"];
+
+const FILTERS = ["grep", "head", "tail", "wc", "sort"];
+
+/** Text filters that read lines (from a file or from a | pipe). */
+function filterLines(cmd: string, args: string[], input: string[]): { out: string[]; error?: string } {
+  const plain = input.map((l) => (l[0] === ERR || l[0] === OK || l[0] === WARN ? l.slice(1) : l));
+  const num = (def: number) => {
+    const i = args.indexOf("-n");
+    const v = i >= 0 ? Number(args[i + 1]) : Number(args.find((a) => /^-\d+$/.test(a))?.slice(1) ?? def);
+    return Number.isFinite(v) && v >= 0 ? v : def;
+  };
+  switch (cmd) {
+    case "grep": {
+      const ci = args.includes("-i");
+      const invert = args.includes("-v");
+      const count = args.includes("-c");
+      const pattern = args.find((a) => !a.startsWith("-"));
+      if (pattern === undefined) return { out: [], error: "usage: grep [-i] [-v] [-c] PATTERN [FILE]" };
+      const p = ci ? pattern.toLowerCase() : pattern;
+      const hits = plain.filter((l) => (ci ? l.toLowerCase() : l).includes(p) !== invert);
+      return { out: count ? [String(hits.length)] : hits };
+    }
+    case "head":
+      return { out: plain.slice(0, num(10)) };
+    case "tail":
+      return { out: plain.slice(Math.max(0, plain.length - num(10))) };
+    case "sort":
+      return { out: [...plain].sort((a, b) => (args.includes("-r") ? b.localeCompare(a) : a.localeCompare(b))) };
+    case "wc": {
+      const lines = plain.length;
+      const words = plain.join(" ").split(/\s+/).filter(Boolean).length;
+      const chars = plain.reduce((n, l) => n + l.length + 1, 0);
+      if (args.includes("-l")) return { out: [String(lines)] };
+      if (args.includes("-w")) return { out: [String(words)] };
+      return { out: [`${String(lines).padStart(4)} ${String(words).padStart(5)} ${String(chars).padStart(6)}`] };
+    }
+  }
+  return { out: plain };
+}
 
 export function run(prev: SimState, line: string): RunResult {
   const trimmed = line.trim();
@@ -198,7 +237,7 @@ export function run(prev: SimState, line: string): RunResult {
   const output: string[] = [];
   let clear = false;
   for (const part of trimmed.split("&&").map((p) => p.trim()).filter(Boolean)) {
-    const r = runOne(state, part);
+    const r = runPipeline(state, part);
     state = r.state;
     output.push(...r.output);
     if (r.clear) {
@@ -211,6 +250,23 @@ export function run(prev: SimState, line: string): RunResult {
 }
 
 type One = { state: SimState; output: string[]; clear?: boolean; failed?: boolean };
+
+/** cmd | grep x | head -3 — the first command runs normally, the rest filter its output. */
+function runPipeline(s: SimState, line: string): One {
+  const stages = line.split(/\s\|\s/).map((x) => x.trim()).filter(Boolean);
+  if (stages.length === 1) return runOne(s, line);
+  let r = runOne(s, stages[0]!);
+  for (const stage of stages.slice(1)) {
+    if (r.failed) return r;
+    const [cmd, ...args] = tokenize(stage);
+    if (!cmd || !FILTERS.includes(cmd)) return fail(r.state, `the playground can pipe into: ${FILTERS.join(", ")}`, r.output);
+    const f = filterLines(cmd, args, r.output);
+    if (f.error) return fail(r.state, f.error);
+    r = { state: r.state, output: f.out };
+  }
+  r.state.log.push(`pipe:${stages.map((x) => tokenize(x)[0]).join("|")}`);
+  return r;
+}
 
 function runOne(s: SimState, line: string): One {
   // echo "text" > file / >> file
@@ -232,6 +288,7 @@ function runOne(s: SimState, line: string): One {
       return ok(s, [
         "Try real commands, for example:",
         "  Linux      pwd · ls -la · cd project · mkdir devops · cat notes.txt · echo \"hi\" > a.txt",
+        "  Text       grep -i aws project/main.tf · head -5 file · wc -l file · docker ps | grep web",
         "  Git        git init · git status · git add . · git commit -m \"msg\" · git log --oneline",
         "  Docker     docker pull nginx · docker run -d --name web -p 8080:80 nginx · docker ps",
         "  Kubernetes kubectl get nodes · kubectl create deployment web --image=nginx",
@@ -334,6 +391,32 @@ function runOne(s: SimState, line: string): One {
       s.fs[dst] = s.fs[src] ?? "";
       if (cmd === "mv") delete s.fs[src];
       s.log.push(`${cmd}:${src}:${dst}`);
+      return ok(s);
+    }
+    case "grep":
+    case "head":
+    case "tail":
+    case "wc":
+    case "sort": {
+      // the file is the last non-flag word (for grep, after the pattern)
+      const words2 = args.filter((a, i) => !a.startsWith("-") && !(args[i - 1] === "-n"));
+      const fileArg = cmd === "grep" ? words2[1] : words2[0];
+      if (!fileArg) return fail(s, `${cmd}: missing file (or pipe something into it, e.g. cat notes.txt | ${cmd})`);
+      const path = resolvePath(s.cwd, fileArg);
+      if (!exists(s, path)) return fail(s, `${cmd}: ${fileArg}: No such file or directory`);
+      if (isDir(s, path)) return fail(s, `${cmd}: ${fileArg}: Is a directory`);
+      const f = filterLines(cmd, args.filter((a) => a !== fileArg), (s.fs[path] ?? "").replace(/\n$/, "").split("\n"));
+      if (f.error) return fail(s, f.error);
+      s.log.push(`${cmd}:${path}`);
+      return ok(s, f.out);
+    }
+    case "chmod": {
+      const [mode, file] = args;
+      if (!mode || !file) return fail(s, "usage: chmod MODE FILE   (e.g. chmod +x deploy.sh or chmod 644 notes.txt)");
+      const path = resolvePath(s.cwd, file);
+      if (!exists(s, path)) return fail(s, `chmod: cannot access '${file}': No such file or directory`);
+      if (!/^([0-7]{3,4}|[ugoa]*[+-=][rwx]+)$/.test(mode)) return fail(s, `chmod: invalid mode: '${mode}'`);
+      s.log.push(`chmod:${mode}:${path}`);
       return ok(s);
     }
     case "git":
@@ -575,7 +658,7 @@ function docker(s: SimState, args: string[]): One {
         s,
         table([
           ["CONTAINER ID", "IMAGE", "STATUS", "PORTS", "NAMES"],
-          ...list.map((c) => [c.id.slice(0, 12), c.image, c.status === "running" ? `Up ${ago(s, c.created)}` : "Exited (0)", c.ports.map((p) => `0.0.0.0:${p.replace(":", "->")}/tcp`).join(", "), c.name]),
+          ...list.map((c) => [c.id.slice(0, 12), c.image, c.status === "running" ? `Up ${ago(s, c.created).replace(" ago", "")}` : "Exited (0)", c.ports.map((p) => `0.0.0.0:${p.replace(":", "->")}/tcp`).join(", "), c.name]),
         ]),
       );
     }

@@ -10,6 +10,9 @@ import { getDailyStreak } from "@/lib/daily";
 import { getRoadmap } from "@/lib/roadmap";
 import { TRACKS } from "@/lib/terminal/missions";
 import { db } from "@/lib/db";
+import { getAchievements } from "@/lib/achievements";
+import { LEVEL_TONES, levelFor } from "@/lib/levels";
+import { Badges, LevelChip } from "@/components/progress/Badges";
 import { CourseCard } from "@/components/dashboard/CourseCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Reveal } from "@/components/ui/Reveal";
@@ -35,8 +38,11 @@ export default async function DashboardPage({ searchParams }: Props) {
     getRoadmap(user.id),
     db.terminalProgress.count({ where: { userId: user.id } }),
   ]);
+  const badges = await getAchievements(user.id);
+  const earned = badges.filter((b) => b.earned).length;
   const totalMissions = TRACKS.reduce((n, t) => n + t.missions.length, 0);
   const me = board.me;
+  const lv = levelFor(me?.allTime ?? 0);
   const sp = await searchParams;
   const firstName = user.name.split(" ")[0];
 
@@ -66,6 +72,23 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Link>
         )}
         </div>
+      </Reveal>
+
+      <Reveal className="mb-5 flex flex-wrap items-center gap-4 rounded-[18px] border border-amber-300/25 bg-gradient-to-r from-amber-300/[0.08] to-transparent px-5 py-4">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-amber-300/70 font-display text-lg font-bold text-amber-100">{lv.level}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-display text-lg font-semibold">{lv.name}</span>
+            <LevelChip level={lv.level} name={`${me?.allTime ?? 0} XP`} tone={LEVEL_TONES[lv.level - 1]!} />
+          </div>
+          <div className="mt-2 h-1.5 max-w-md overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-400" style={{ width: `${lv.progress}%` }} />
+          </div>
+          <p className="mt-1 text-xs text-text-faint">{lv.nextName ? `${lv.next! - (me?.allTime ?? 0)} XP to Level ${lv.level + 1} · ${lv.nextName}` : "Highest level reached 👑"}</p>
+        </div>
+        <a href="#badges" className="text-sm text-amber-200 hover:underline">
+          {earned}/{badges.length} badges →
+        </a>
       </Reveal>
 
       <section aria-label="Your progress" className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -248,6 +271,18 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
           </>
         )}
+      </section>
+
+      <section id="badges" className="mb-14 scroll-mt-24">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <Reveal as="h2" variant="blur" className="font-display text-2xl font-semibold">
+            Badges
+          </Reveal>
+          <span className="font-mono text-sm text-text-faint">
+            {earned}/{badges.length} earned
+          </span>
+        </div>
+        <Badges badges={badges} />
       </section>
 
       <section>

@@ -31,6 +31,7 @@ export const TRACKS: Track[] = [
       { id: "linux-4", title: "Write a file", goal: 'Create devops/hello.txt containing the text "Hello DevOps".', hint: 'echo "Hello DevOps" > devops/hello.txt', learn: "> overwrites a file, >> appends to it.", check: (s) => /hello devops/i.test(s.fs[`${HOME}/devops/hello.txt`] ?? "") },
       { id: "linux-5", title: "Read it back", goal: "Show the contents of devops/hello.txt.", hint: "cat devops/hello.txt", learn: "cat prints a file; for long files use less or tail -f for logs.", check: (s) => has(s, `cat:${HOME}/devops/hello.txt`) },
       { id: "linux-6", title: "Clean up", goal: "Delete the file notes.txt from your home folder.", hint: "rm ~/notes.txt", learn: "There is no recycle bin in Linux — rm is permanent. Use rm -r for folders.", check: (s) => !(`${HOME}/notes.txt` in s.fs) },
+      { id: "linux-7", title: "Search a file", goal: "Find the line that mentions region in ~/project/main.tf.", hint: "grep region ~/project/main.tf", learn: "grep finds text in files; add -i to ignore case, or pipe output into it: cat file | grep word.", check: (s) => s.log.includes(`grep:${P}/main.tf`) || (s.log.some((l) => l.startsWith("pipe:cat|grep")) && s.log.includes(`cat:${P}/main.tf`)) },
     ],
   },
   {

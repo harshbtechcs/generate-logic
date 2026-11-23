@@ -12,6 +12,9 @@ import { optionText } from "@/lib/quiz/engine";
 import { techBySlug } from "@/lib/data";
 import { TRACKS } from "@/lib/terminal/missions";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
+import { getAchievements } from "@/lib/achievements";
+import { LEVEL_TONES, levelFor } from "@/lib/levels";
+import { Badges, LevelChip } from "@/components/progress/Badges";
 import { cn } from "@/lib/cn";
 import { ResetPlaylistButton, RestrictButton, UndoLessonButton } from "@/components/admin/AdminButtons";
 
@@ -81,7 +84,8 @@ export default async function AdminUserPage({ params }: Props) {
     getDailyStreak(user.id),
     getActivityFeed({ userId: user.id, limit: 60 }),
   ]);
-  const quizCount = await db.quizAttempt.count({ where: { userId: user.id } });
+  const [quizCount, badges] = await Promise.all([db.quizAttempt.count({ where: { userId: user.id } }), getAchievements(user.id)]);
+  const lv = levelFor(allBoard.me?.total ?? 0);
   const avgQuiz = attempts.length ? Math.round((attempts.reduce((a, x) => a + (x.total ? x.score / x.total : 0), 0) / attempts.length) * 100) : 0;
   const missionAt = new Map(missionRows.map((m) => [m.missionId, m.completedAt]));
   const toolName = (slug: string) => (slug === "mix" ? "DevOps Mix" : techBySlug[slug]?.name ?? slug);
@@ -170,6 +174,12 @@ export default async function AdminUserPage({ params }: Props) {
             </dd>
           </div>
           <div>
+            <dt className="text-text-faint">Level</dt>
+            <dd>
+              <LevelChip level={lv.level} name={lv.name} tone={LEVEL_TONES[lv.level - 1]!} />
+            </dd>
+          </div>
+          <div>
             <dt className="text-text-faint">On leaderboard</dt>
             <dd>{allBoard.me?.visible === false ? "Hidden" : "Visible"}</dd>
           </div>
@@ -185,6 +195,13 @@ export default async function AdminUserPage({ params }: Props) {
             <RestrictButton userId={user.id} disabled={restricted} />
           </div>
         )}
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-4 font-display text-2xl font-semibold">
+          Badges <span className="font-mono text-base text-text-faint">{badges.filter((b) => b.earned).length}/{badges.length}</span>
+        </h2>
+        <Badges badges={badges} compact />
       </section>
 
       <section className="mb-10">

@@ -8,6 +8,7 @@ import { checkAnswer, startQuiz, submitQuiz, type SubmitResult } from "@/app/act
 import type { Grade, PublicQuestion } from "@/lib/quiz/engine";
 import { useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
+import { Confetti } from "@/components/ui/Confetti";
 
 type Answer = { optionId: string | null; grade: Grade; timedOut?: boolean };
 
@@ -77,6 +78,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
   const [elapsed, setElapsed] = useState(0);
   const [loading, startLoading] = useTransition();
   const [checking, setChecking] = useState(false);
+  const [burst, setBurst] = useState(0);
   // Countdown belongs to one question id, so a finished timer can never leak into the next question.
   const [timer, setTimer] = useState<{ qid: string; left: number } | null>(null);
   const startedAt = useRef(0);
@@ -175,6 +177,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
       });
       setElapsed(duration);
       setResult(res);
+      if (res.ok && res.total && res.score / res.total >= 0.8) setBurst((b) => b + 1);
       setPhase("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -247,6 +250,7 @@ export function QuizRunner({ tool, toolName, learnHref }: { tool: string; toolNa
 
     return (
       <div className="mx-auto max-w-3xl">
+        <Confetti fire={burst} />
         <motion.section
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
