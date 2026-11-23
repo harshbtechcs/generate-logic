@@ -35,8 +35,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Learning data:</strong> lessons you mark as complete, playlists you save, learning paths you are
-          enrolled in, and a history of recent activity (for example &ldquo;opened playlist&rdquo;), used to show your
-          progress and streak.
+          enrolled in, your quiz answers and scores, and a history of recent activity (for example &ldquo;opened
+          playlist&rdquo;), used to show your progress, streak and quiz results.
         </li>
         <li>
           <strong>Sign-in sessions:</strong> a session record with the date, your IP address and browser type, used

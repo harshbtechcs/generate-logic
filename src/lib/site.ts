@@ -14,6 +14,7 @@ export const navLinks = [
   { label: "Home", href: "/" },
   { label: "Learning Paths", href: "/#paths" },
   { label: "Playlists", href: "/playlists" },
+  { label: "Quiz", href: "/quiz" },
   { label: "Notes", href: "/notes" },
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },

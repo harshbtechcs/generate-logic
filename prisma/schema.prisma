@@ -51,6 +51,7 @@ model User {
   notifications UserNotification[]
   projects      UserProject[]
   auditLogs     AuditLog[]
+  quizAttempts  QuizAttempt[]
 
   @@map("users")
 }
@@ -336,4 +337,37 @@ model AuditLog {
 
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─────────────────────────────── Quizzes ───────────────────────────────
+// Questions live in code (src/lib/quiz/bank.ts); only attempts are stored.
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  tool        String // technology slug, or "mix"
+  score       Int
+  total       Int
+  durationSec Int      @map("duration_sec")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@index([userId, createdAt])
+  @@index([userId, tool])
+  @@map("quiz_attempts")
+}
+
+model QuizAnswer {
+  id             String  @id @default(cuid())
+  attemptId      String  @map("attempt_id")
+  questionId     String  @map("question_id")
+  selectedOption String? @map("selected_option")
+  isCorrect      Boolean @map("is_correct")
+
+  attempt QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+  @@map("quiz_answers")
 }

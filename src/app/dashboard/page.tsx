@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookMarked, BookOpenCheck, CheckCircle2, Flame, GraduationCap, ListVideo, PieChart, PlayCircle, Settings, Shield } from "lucide-react";
+import { BookMarked, BookOpenCheck, Brain, CheckCircle2, Flame, GraduationCap, ListVideo, PieChart, PlayCircle, Settings, Shield, Target, Trophy } from "lucide-react";
 import { requireUser, isAdmin } from "@/lib/session";
 import { getUserStats } from "@/lib/stats";
 import { getRecentActivity, getUserCourses } from "@/lib/learning";
+import { getUserQuizSummary } from "@/lib/quiz/stats";
 import { CourseCard } from "@/components/dashboard/CourseCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Reveal } from "@/components/ui/Reveal";
@@ -19,10 +20,11 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export default async function DashboardPage({ searchParams }: Props) {
   const user = await requireUser("/dashboard");
-  const [stats, courses, activity] = await Promise.all([
+  const [stats, courses, activity, quiz] = await Promise.all([
     getUserStats(user.id),
     getUserCourses(user.id),
     getRecentActivity(user.id),
+    getUserQuizSummary(user.id),
   ]);
   const sp = await searchParams;
   const firstName = user.name.split(" ")[0];
@@ -123,6 +125,77 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Link>
         </Reveal>
       )}
+
+      <section className="mb-14">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <Reveal as="h2" variant="blur" className="font-display text-2xl font-semibold">
+            Quiz practice
+          </Reveal>
+          <Link href="/quiz" className="gl-btn inline-flex items-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/10 px-5 py-2.5 text-sm font-medium text-teal-100">
+            <Brain size={16} aria-hidden="true" /> Take a quiz
+          </Link>
+        </div>
+        {quiz.taken === 0 ? (
+          <Reveal className="rounded-[18px] border border-dashed border-slate-400/30 p-6 text-text-muted">
+            No quizzes yet. Pick a tool and answer 10 questions — your scores will show up here.
+          </Reveal>
+        ) : (
+          <>
+            <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
+              <StatCard icon={Brain} label="Quizzes taken" value={quiz.taken} />
+              <StatCard icon={Target} label="Average score" value={quiz.avg} suffix="%" delay={0.05} tone="text-blue-300" />
+              <StatCard
+                icon={Trophy}
+                label={quiz.strongest ? `Strongest: ${quiz.strongest.name}` : "Strongest tool"}
+                value={quiz.strongest ? quiz.strongest.bestPercent : 0}
+                suffix="%"
+                delay={0.1}
+                tone="text-amber-300"
+              />
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <Reveal className="rounded-[18px] border border-slate-400/15 p-5">
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.1em] text-text-faint">Best score by tool</h3>
+                <ul className="flex flex-col gap-3">
+                  {quiz.bests.map((b) => (
+                    <li key={b.tool}>
+                      <div className="mb-1 flex justify-between text-sm">
+                        <Link href={`/quiz/${b.tool}`} className="hover:text-brand-teal">
+                          {b.name}
+                        </Link>
+                        <span className="font-mono text-text-faint">
+                          {b.bestPercent}% · {b.attempts} {b.attempts === 1 ? "try" : "tries"}
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div className="h-full rounded-full bg-gradient-to-r from-brand-green via-brand-cyan to-brand-blue" style={{ width: `${b.bestPercent}%` }} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+              <Reveal delay={0.05} className="rounded-[18px] border border-slate-400/15 p-5">
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.1em] text-text-faint">Recent quizzes</h3>
+                <ul className="flex flex-col divide-y divide-slate-400/10">
+                  {quiz.recent.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                      <span>{r.name}</span>
+                      <span className="flex items-center gap-3">
+                        <span className={r.percent >= 70 ? "font-mono text-green-300" : r.percent >= 50 ? "font-mono text-amber-200" : "font-mono text-red-300"}>
+                          {r.score}/{r.total}
+                        </span>
+                        <time dateTime={r.createdAt.toISOString()} className="font-mono text-xs text-text-faint">
+                          {timeAgo.format(r.createdAt)}
+                        </time>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+            </div>
+          </>
+        )}
+      </section>
 
       <section>
         <Reveal as="h2" variant="blur" className="mb-5 font-display text-2xl font-semibold">

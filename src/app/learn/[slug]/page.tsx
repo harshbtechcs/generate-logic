@@ -47,6 +47,12 @@ export default async function LearnPage({ params }: Props) {
           <span className="kicker">LEARNING PATH · {tech.tag.toUpperCase()}</span>
           <h1 className="font-display text-[40px] font-bold leading-tight sm:text-[52px]">{tech.name}</h1>
         </div>
+        <Link
+          href={`/quiz/${tech.slug}`}
+          className="gl-btn ml-auto inline-flex items-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/10 px-5 py-3 text-sm font-medium text-teal-100"
+        >
+          Test yourself: {tech.name} quiz
+        </Link>
       </Reveal>
 
       <section className="mb-16">
