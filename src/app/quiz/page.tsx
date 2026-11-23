@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRight, Shuffle } from "lucide-react";
 import { getSession, isAdmin } from "@/lib/session";
 import { getQuizTools } from "@/lib/quiz/tools";
-import { getUserQuizBests } from "@/lib/quiz/stats";
 import { toneStyles } from "@/lib/data";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Reveal } from "@/components/ui/Reveal";
@@ -13,13 +12,12 @@ export const metadata: Metadata = {
   title: "DevOps Quizzes",
   description: "Practice Docker, Kubernetes, Terraform, AWS, Linux, Git and CI/CD with 10-question quizzes — new questions every time.",
 };
-// Shows each signed-in user their own best scores.
+// Admin sees question-bank sizes.
 export const dynamic = "force-dynamic";
 
 export default async function QuizPage() {
   const tools = getQuizTools();
   const session = await getSession();
-  const bests = session ? await getUserQuizBests(session.user.id) : new Map();
   // Only the admin sees how many questions each bank holds.
   const admin = session ? isAdmin(session.user) : false;
 
@@ -34,7 +32,6 @@ export default async function QuizPage() {
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {tools.map((t, i) => {
             const tone = toneStyles[t.tone];
-            const best = bests.get(t.slug);
             const isMix = t.slug === "mix";
             return (
               <Reveal key={t.slug} delay={(i % 4) * 0.06}>
@@ -62,15 +59,7 @@ export default async function QuizPage() {
                     </span>
                   </div>
                   <div className="mt-auto flex items-center justify-between text-sm">
-                    {best ? (
-                      <span className="text-text-muted">
-                        Best <span className="font-mono text-brand-teal">{best.bestPercent}%</span> · {best.attempts}{" "}
-                        {best.attempts === 1 ? "try" : "tries"}
-                        {admin && <span className="text-text-faint"> · {t.questionCount} in bank</span>}
-                      </span>
-                    ) : (
-                      <span className="text-text-faint">{admin ? `${t.questionCount} questions in bank` : "10 questions · 10s each"}</span>
-                    )}
+                    <span className="text-text-faint">{admin ? `${t.questionCount} questions in bank` : "10 questions · 10s each"}</span>
                     <ArrowRight size={16} className="text-brand-teal" aria-hidden="true" />
                   </div>
                 </Link>
@@ -83,7 +72,7 @@ export default async function QuizPage() {
             <Link href="/sign-in?next=/quiz" className="text-brand-teal hover:underline">
               Sign in
             </Link>{" "}
-            to save your scores and see your best results here.
+            to save your scores to your dashboard.
           </p>
         )}
       </section>
