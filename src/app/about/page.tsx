@@ -10,7 +10,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHeader
-        kicker="ABOUT US"
+        kicker="ABOUT US" word="ABOUT"
         title="About Generate Logic"
         intro="Generate Logic teaches Cloud and DevOps the practical way — CI/CD pipelines, containers, infrastructure automation, monitoring and cloud deployments, with hands-on labs and real projects."
       />

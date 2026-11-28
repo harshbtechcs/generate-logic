@@ -44,7 +44,7 @@ export default async function LeaderboardPage({ searchParams }: Props) {
 
   return (
     <>
-      <PageHeader kicker="LEADERBOARD" title="Top learners" intro="Earn XP by practising. The weekly board resets every Monday (India time) — everyone gets a fresh chance." />
+      <PageHeader kicker="LEADERBOARD" word="TOP XP" title="Top learners" intro="Earn XP by practising. The weekly board resets every Monday (India time) — everyone gets a fresh chance." />
       <section className="mx-auto grid max-w-site gap-6 px-5 pb-28 sm:px-8 lg:grid-cols-[1fr_340px]">
         <div className="min-w-0">
           <div role="tablist" aria-label="Period" className="mb-6 inline-flex rounded-xl border border-slate-400/20 p-1">

@@ -49,7 +49,7 @@ export default async function RoadmapPage() {
   return (
     <>
       <PageHeader
-        kicker="DEVOPS ROADMAP"
+        kicker="DEVOPS ROADMAP" word="ROADMAP"
         title="Your path to DevOps"
         intro="Learn in this order. Each step turns green as you watch its lessons, pass its quiz and finish its terminal missions."
       />

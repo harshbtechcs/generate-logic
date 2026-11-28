@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ThemedBackdrop } from "@/components/motion/AnimatedHeader";
 
 /** Centered glass card used by every sign-in / sign-up / password page. */
 export function AuthShell({
@@ -17,7 +18,8 @@ export function AuthShell({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden px-5 py-16">
+    <div className="relative isolate flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden px-5 py-16">
+      <ThemedBackdrop theme="teal" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(34,211,238,0.14),rgba(74,222,128,0.06)_55%,transparent)]"

@@ -17,7 +17,7 @@ export default async function DailyPage() {
   const state = await getDailyState(session?.user.id ?? null);
   return (
     <>
-      <PageHeader kicker="DAILY CHALLENGE" title="Today's DevOps question" intro="A new question every day, the same for everyone. Answer it to keep your streak 🔥 going." />
+      <PageHeader kicker="DAILY CHALLENGE" word="DAILY" title="Today's DevOps question" intro="A new question every day, the same for everyone. Answer it to keep your streak 🔥 going." />
       <section className="mx-auto max-w-site px-5 pb-28 sm:px-8">
         <DailyChallenge state={state} signedIn={!!session} nextAt={nextIstMidnight().getTime()} />
       </section>

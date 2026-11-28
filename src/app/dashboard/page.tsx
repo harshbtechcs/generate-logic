@@ -1,3 +1,4 @@
+import { ThemedBackdrop } from "@/components/motion/AnimatedHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookMarked, BookOpenCheck, Brain, CalendarCheck, CheckCircle2, Flame, GraduationCap, ListVideo, Map as MapIcon, PieChart, PlayCircle, Settings, Shield, SquareTerminal, Target, Trophy } from "lucide-react";
@@ -47,7 +48,8 @@ export default async function DashboardPage({ searchParams }: Props) {
   const firstName = user.name.split(" ")[0];
 
   return (
-    <div className="mx-auto max-w-site px-5 pb-28 pt-12 sm:px-8">
+    <div className="relative isolate mx-auto max-w-site px-5 pb-28 pt-12 sm:px-8">
+      <ThemedBackdrop theme={"teal"} />
       {sp.welcome && (
         <div className="mb-8">
           <Alert kind="success">Your account is ready. Welcome to Generate Logic!</Alert>

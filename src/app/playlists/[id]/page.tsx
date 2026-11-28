@@ -1,3 +1,5 @@
+import { ThemedBackdrop } from "@/components/motion/AnimatedHeader";
+import { themeForTech } from "@/lib/themes";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -60,7 +62,8 @@ export default async function PlaylistPage({ params, searchParams }: Props) {
         : firstOpen;
 
   return (
-    <div className="mx-auto max-w-site px-5 pb-28 pt-10 sm:px-8">
+    <div className="relative isolate mx-auto max-w-site px-5 pb-28 pt-10 sm:px-8">
+      <ThemedBackdrop theme={playlist.technology ? themeForTech(playlist.technology.slug) : "red"} />
       <Link href="/playlists" className="mb-6 inline-flex items-center gap-2 text-sm text-text-muted hover:text-brand-teal">
         <ArrowLeft size={16} aria-hidden="true" /> All playlists
       </Link>

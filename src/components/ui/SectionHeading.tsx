@@ -1,4 +1,5 @@
 import { Reveal } from "./Reveal";
+import { LetterReveal } from "@/components/motion/AnimatedHeader";
 
 type Props = {
   kicker: string;
@@ -15,9 +16,9 @@ export function SectionHeading({ kicker, title, intro, aside }: Props) {
         <Reveal as="span" variant="left" className="kicker">
           {kicker}
         </Reveal>
-        <Reveal as="h2" variant="blur" delay={0.1} className="font-display text-[34px] font-bold tracking-tight sm:text-[42px]">
-          {title}
-        </Reveal>
+        <h2 className="font-display text-[34px] font-bold tracking-tight sm:text-[42px]">
+          <LetterReveal text={title} delay={0.05} onView />
+        </h2>
       </div>
       {intro && (
         <Reveal as="p" delay={0.2} className="max-w-[420px] text-base leading-relaxed text-text-muted">

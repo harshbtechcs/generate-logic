@@ -5,6 +5,7 @@ import { Providers } from "@/components/layout/Providers";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
+import { CardSpotlight } from "@/components/motion/CardSpotlight";
 import { site } from "@/lib/site";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Providers>
           <ScrollProgress />
+          <CardSpotlight />
           <Navbar />
           <main id="main">{children}</main>
           <Footer />

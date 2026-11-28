@@ -24,7 +24,7 @@ export default async function QuizPage() {
   return (
     <>
       <PageHeader
-        kicker="PRACTICE"
+        kicker="PRACTICE" theme="violet" word="QUIZ"
         title="DevOps quizzes"
         intro="Pick a tool and answer 10 questions, from beginner to advanced. Every attempt brings new questions, and you see the explanation right after each answer."
       />

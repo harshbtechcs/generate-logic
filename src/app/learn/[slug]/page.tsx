@@ -7,6 +7,9 @@ import { getChannelPlaylists } from "@/lib/youtube";
 import { Reveal } from "@/components/ui/Reveal";
 import { TechBadge } from "@/components/ui/TechBadge";
 import { PlaylistCard } from "@/components/home/PlaylistCard";
+import { AnimatedHeader } from "@/components/motion/AnimatedHeader";
+import { themeForTech } from "@/lib/themes";
+import { TRACKS } from "@/lib/terminal/missions";
 
 export const revalidate = 3600;
 
@@ -35,26 +38,32 @@ export default async function LearnPage({ params }: Props) {
   const playlists = (await getChannelPlaylists()).filter((p) => p.technology?.slug === slug);
   const roadmap = roadmaps[slug];
 
-  return (
-    <div className="mx-auto max-w-site px-5 pb-28 pt-10 sm:px-8">
-      <Link href="/#paths" className="mb-8 inline-flex items-center gap-2 text-sm text-text-muted hover:text-brand-teal">
-        <ArrowLeft size={16} aria-hidden="true" /> All technologies
-      </Link>
+  const art = (["docker", "kubernetes", "terraform", "aws", "linux", "git"] as const).find((a) => a === slug);
 
-      <Reveal className="mb-14 flex flex-wrap items-center gap-6">
-        <TechBadge tech={tech} size={84} />
-        <div className="flex flex-col gap-2">
-          <span className="kicker">LEARNING PATH · {tech.tag.toUpperCase()}</span>
-          <h1 className="font-display text-[40px] font-bold leading-tight sm:text-[52px]">{tech.name}</h1>
-        </div>
-        <Link
-          href={`/quiz/${tech.slug}`}
-          className="gl-btn ml-auto inline-flex items-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/10 px-5 py-3 text-sm font-medium text-teal-100"
-        >
+  return (
+    <>
+      <AnimatedHeader
+        kicker={`LEARNING PATH · ${tech.tag.toUpperCase()}`}
+        title={tech.name}
+        intro={`Learn ${tech.name} step by step — videos in order, then test yourself with the quiz${TRACKS.some((t) => t.tool === slug) ? " and practise in the terminal" : ""}.`}
+        theme={themeForTech(slug)}
+        word={tech.short.length > 2 ? tech.short : tech.name.split(" ")[0]}
+        art={art}
+        side={art ? undefined : <TechBadge tech={tech} size={160} />}
+      >
+        <Link href={`/quiz/${tech.slug}`} className="gl-btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink-900">
           Test yourself: {tech.name} quiz
         </Link>
-      </Reveal>
-
+        {TRACKS.some((t) => t.tool === slug) && (
+          <Link href={`/terminal?tool=${slug}`} className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20">
+            Practise in the terminal
+          </Link>
+        )}
+        <Link href="/#paths" className="inline-flex items-center gap-2 rounded-xl px-3 py-3 text-sm text-white/70 hover:text-white">
+          <ArrowLeft size={16} aria-hidden="true" /> All technologies
+        </Link>
+      </AnimatedHeader>
+    <div className="mx-auto max-w-site px-5 pb-28 sm:px-8">
       <section className="mb-16">
         <Reveal as="h2" variant="blur" className="mb-6 font-display text-2xl font-semibold">
           Roadmap
@@ -95,5 +104,6 @@ export default async function LearnPage({ params }: Props) {
         )}
       </section>
     </div>
+    </>
   );
 }

@@ -25,7 +25,7 @@ export default async function TerminalPage({ searchParams }: Props) {
   return (
     <>
       <PageHeader
-        kicker="COMMAND PLAYGROUND"
+        kicker="COMMAND PLAYGROUND" word="SHELL"
         title="Practise real commands"
         intro="A safe, simulated terminal right in your browser. Finish guided missions for Linux, Git, Docker, Kubernetes and Terraform — no setup, nothing to break."
       />

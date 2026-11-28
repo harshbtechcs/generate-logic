@@ -53,6 +53,19 @@ body {
     transition: translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.35s, box-shadow 0.35s,
       background-color 0.35s;
   }
+  .gl-card {
+    position: relative;
+  }
+  .gl-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--spot-o, 0);
+    transition: opacity 0.3s;
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(94, 234, 212, 0.14), transparent 60%);
+  }
   .gl-card:hover {
     translate: 0 -8px;
     border-color: rgba(94, 234, 212, 0.55);

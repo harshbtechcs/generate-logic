@@ -17,7 +17,7 @@ export default async function PlaylistsPage() {
   return (
     <>
       <PageHeader
-        kicker="PLAYLISTS"
+        kicker="PLAYLISTS" word="PLAY"
         title="All playlists"
         intro="Synced automatically from the Generate Logic YouTube channel. Pick a playlist and watch it right here."
       />
