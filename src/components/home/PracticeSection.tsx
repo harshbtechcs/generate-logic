@@ -27,13 +27,14 @@ export function PracticeSection({ daily, top }: Props) {
     <section className="relative mx-auto max-w-site px-5 pb-24 pt-6 sm:px-8">
       <SectionHeading
         kicker="PRACTICE EVERY DAY"
-        title="Don't just watch — practise"
+        title="Don't just watch"
         intro="A daily question, a safe terminal to try real commands, and a leaderboard to keep you going."
       />
       <div className="grid gap-5 lg:grid-cols-3">
         <Reveal className="h-full">
-          <Link href="/daily" className="gl-card group flex h-full flex-col gap-4 rounded-[20px] border border-amber-300/30 bg-gradient-to-b from-amber-300/[0.07] to-transparent p-6">
-            <span className="flex items-center gap-2 text-sm font-semibold text-amber-200">
+          <Link href="/daily" className="gl-card group relative flex h-full flex-col gap-4 overflow-hidden rounded-[24px] p-6 text-white ring-1 ring-white/10"
+            style={{ background: "linear-gradient(155deg, #c98a06 0%, #3b2503 90%)" }}>
+            <span className="flex items-center gap-2 text-sm font-semibold text-white">
               <CalendarCheck size={18} aria-hidden="true" /> Today&apos;s challenge
             </span>
             {daily ? (
@@ -47,14 +48,14 @@ export function PracticeSection({ daily, top }: Props) {
             ) : (
               <span className="font-display text-xl font-semibold">A new DevOps question every day</span>
             )}
-            <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-amber-200">
+            <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-white">
               Answer now <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </span>
           </Link>
         </Reveal>
 
         <Reveal delay={0.08} className="h-full">
-          <Link href="/terminal" className="gl-card group flex h-full flex-col overflow-hidden rounded-[20px] border border-green-400/25 bg-[#05080f]">
+          <Link href="/terminal" className="gl-card group flex h-full flex-col overflow-hidden rounded-[24px] bg-[#05080f] ring-1 ring-green-400/40 shadow-[0_30px_60px_-30px_rgba(34,197,94,0.6)]">
             <span className="flex items-center gap-2 border-b border-slate-400/15 px-4 py-2.5">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
               <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
@@ -87,8 +88,9 @@ export function PracticeSection({ daily, top }: Props) {
         </Reveal>
 
         <Reveal delay={0.16} className="h-full">
-          <Link href="/leaderboard" className="gl-card group flex h-full flex-col gap-4 rounded-[20px] border border-orange-400/25 bg-gradient-to-b from-orange-400/[0.07] to-transparent p-6">
-            <span className="flex items-center gap-2 text-sm font-semibold text-orange-200">
+          <Link href="/leaderboard" className="gl-card group relative flex h-full flex-col gap-4 overflow-hidden rounded-[24px] p-6 text-white ring-1 ring-white/10"
+            style={{ background: "linear-gradient(155deg, #d9520c 0%, #3d1404 90%)" }}>
+            <span className="flex items-center gap-2 text-sm font-semibold text-white">
               <Trophy size={18} aria-hidden="true" /> Top learners this week
             </span>
             {top.length ? (
@@ -99,14 +101,14 @@ export function PracticeSection({ daily, top }: Props) {
                       {e.rank === 1 ? <Crown size={16} className="text-amber-300" aria-label="First place" /> : `#${e.rank}`}
                     </span>
                     <span className="flex-1 font-medium">{e.name}</span>
-                    <span className="font-mono text-sm text-orange-200">{e.total} XP</span>
+                    <span className="font-mono text-sm text-white">{e.total} XP</span>
                   </li>
                 ))}
               </ol>
             ) : (
               <span className="text-text-muted">The board is empty this week — your name could be at the top.</span>
             )}
-            <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-orange-200">
+            <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-white">
               See the leaderboard <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </span>
           </Link>

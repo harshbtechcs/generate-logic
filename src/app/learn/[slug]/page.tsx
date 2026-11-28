@@ -7,8 +7,8 @@ import { getChannelPlaylists } from "@/lib/youtube";
 import { Reveal } from "@/components/ui/Reveal";
 import { TechBadge } from "@/components/ui/TechBadge";
 import { PlaylistCard } from "@/components/home/PlaylistCard";
-import { AnimatedHeader } from "@/components/motion/AnimatedHeader";
-import { themeForTech } from "@/lib/themes";
+import { AnimatedHeader, LetterReveal } from "@/components/motion/AnimatedHeader";
+import { THEMES, themeForTech } from "@/lib/themes";
 import { TRACKS } from "@/lib/terminal/missions";
 
 export const revalidate = 3600;
@@ -38,6 +38,7 @@ export default async function LearnPage({ params }: Props) {
   const playlists = (await getChannelPlaylists()).filter((p) => p.technology?.slug === slug);
   const roadmap = roadmaps[slug];
 
+  const theme = THEMES[themeForTech(slug)];
   const art = (["docker", "kubernetes", "terraform", "aws", "linux", "git"] as const).find((a) => a === slug);
 
   return (
@@ -65,15 +66,15 @@ export default async function LearnPage({ params }: Props) {
       </AnimatedHeader>
     <div className="mx-auto max-w-site px-5 pb-28 sm:px-8">
       <section className="mb-16">
-        <Reveal as="h2" variant="blur" className="mb-6 font-display text-2xl font-semibold">
-          Roadmap
-        </Reveal>
+        <h2 className="mb-6 font-display text-[40px] font-black uppercase leading-none tracking-tighter sm:text-[56px]">
+          <LetterReveal text="The Roadmap" onView />
+        </h2>
         {roadmap ? (
-          <ol className="overflow-hidden rounded-[20px] border border-slate-400/20 bg-ink-900/70 py-2.5">
+          <ol className="overflow-hidden rounded-[26px] py-2.5 ring-1 ring-white/15" style={{ background: `linear-gradient(160deg, ${theme.bg[1]}cc 0%, ${theme.bg[0]} 70%)` }}>
             {roadmap.map((m, i) => (
-              <Reveal as="li" key={m.title} variant="right" delay={i * 0.04} className="flex items-center gap-4 px-[22px] py-3">
-                <span className="w-[30px] font-mono text-[13px] text-slate-500">{String(i + 1).padStart(2, "0")}</span>
-                <span className="flex-1 text-[15px] text-slate-200">{m.title}</span>
+              <Reveal as="li" key={m.title} variant="right" delay={i * 0.04} className="group flex items-center gap-4 px-6 py-3.5 transition-colors hover:bg-white/[0.07]">
+                <span className="w-9 font-display text-xl font-black transition-transform group-hover:scale-110" style={{ color: theme.accent[0] }}>{String(i + 1).padStart(2, "0")}</span>
+                <span className="flex-1 text-[15px] font-medium text-white transition-transform group-hover:translate-x-1">{m.title}</span>
                 <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${levelStyles[m.level]}`}>{m.level}</span>
               </Reveal>
             ))}
@@ -86,9 +87,9 @@ export default async function LearnPage({ params }: Props) {
       </section>
 
       <section>
-        <Reveal as="h2" variant="blur" className="mb-6 font-display text-2xl font-semibold">
-          {tech.name} playlists
-        </Reveal>
+        <h2 className="mb-6 font-display text-[40px] font-black uppercase leading-none tracking-tighter sm:text-[56px]">
+          <LetterReveal text="Playlists" onView />
+        </h2>
         {playlists.length > 0 ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
             {playlists.map((p, i) => (

@@ -171,7 +171,7 @@ export function AnimatedHeader({ kicker, title, intro, theme, word, art, side, c
             />
             {kicker}
           </motion.span>
-          <h1 className="font-display text-[42px] font-bold leading-[1.02] tracking-tight text-white sm:text-[58px] lg:text-[68px]">
+          <h1 className="font-display text-[42px] font-black uppercase leading-[0.95] tracking-tighter text-white sm:text-[60px] lg:text-[76px]">
             <LetterReveal text={title} delay={0.1} />
           </h1>
           {intro && (

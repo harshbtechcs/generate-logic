@@ -11,6 +11,7 @@ import { getDailyStreak } from "@/lib/daily";
 import { getRoadmap } from "@/lib/roadmap";
 import { TRACKS } from "@/lib/terminal/missions";
 import { db } from "@/lib/db";
+import { THEMES, type ThemeName } from "@/lib/themes";
 import { getAchievements } from "@/lib/achievements";
 import { LEVEL_TONES, levelFor } from "@/lib/levels";
 import { Badges, LevelChip } from "@/components/progress/Badges";
@@ -97,7 +98,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <ProgressTile
           href="/daily"
           icon={daily.doneToday ? Flame : CalendarCheck}
-          tone="text-amber-300 border-amber-300/30 bg-amber-300/[0.06]"
+          theme="amber"
           title="Daily challenge"
           big={`${daily.streak}`}
           unit="day streak"
@@ -107,7 +108,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <ProgressTile
           href="/leaderboard"
           icon={Trophy}
-          tone="text-orange-300 border-orange-400/30 bg-orange-400/[0.06]"
+          theme="orange"
           title="This week"
           big={`${me?.total ?? 0}`}
           unit="XP"
@@ -116,7 +117,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <ProgressTile
           href="/roadmap"
           icon={MapIcon}
-          tone="text-blue-300 border-blue-400/30 bg-blue-400/[0.06]"
+          theme="blue"
           title="DevOps roadmap"
           big={`${roadmap.overall}`}
           unit="% complete"
@@ -126,7 +127,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <ProgressTile
           href="/terminal"
           icon={SquareTerminal}
-          tone="text-green-300 border-green-400/30 bg-green-400/[0.06]"
+          theme="green"
           title="Terminal missions"
           big={`${missionsDone}`}
           unit={`/ ${totalMissions}`}
@@ -329,7 +330,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 function ProgressTile({
   href,
   icon: Icon,
-  tone,
+  theme,
   title,
   big,
   unit,
@@ -339,7 +340,7 @@ function ProgressTile({
 }: {
   href: string;
   icon: typeof Flame;
-  tone: string;
+  theme: ThemeName;
   title: string;
   big: string;
   unit: string;
@@ -347,28 +348,36 @@ function ProgressTile({
   bar?: number;
   highlight?: boolean;
 }) {
+  const t = THEMES[theme];
   return (
     <Reveal>
       <Link
         href={href}
-        className={`gl-card group flex h-full flex-col gap-3 rounded-[18px] border p-5 ${tone} ${highlight ? "ring-1 ring-amber-300/50" : ""}`}
+        className={`gl-card group relative flex h-full flex-col gap-3 overflow-hidden rounded-[22px] p-5 text-white ring-1 ring-white/10 shadow-[0_24px_50px_-28px_rgba(0,0,0,0.9)] ${highlight ? "ring-2 ring-amber-200/70" : ""}`}
+        style={{ background: `linear-gradient(155deg, ${t.bg[1]} 0%, ${t.bg[0]} 90%)` }}
       >
-        <span className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-medium text-text">
-            <Icon size={18} className="gl-ico" aria-hidden="true" /> {title}
-          </span>
-          <ArrowRight size={16} className="opacity-60 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+        <span aria-hidden="true" className="pointer-events-none absolute -bottom-5 -right-1 select-none font-display text-[88px] font-black leading-none text-white/[0.1]">
+          {big}
         </span>
-        <span className="flex items-baseline gap-1.5">
-          <span className="font-display text-[34px] font-bold leading-none text-text">{big}</span>
-          <span className="text-sm text-text-faint">{unit}</span>
+        <span className="relative flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15" style={{ color: t.accent[0] }}>
+              <Icon size={17} className="gl-ico" aria-hidden="true" />
+            </span>
+            {title}
+          </span>
+          <ArrowRight size={16} className="opacity-70 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+        </span>
+        <span className="relative flex items-baseline gap-1.5">
+          <span className="font-display text-[40px] font-black leading-none">{big}</span>
+          <span className="text-sm text-white/70">{unit}</span>
         </span>
         {bar !== undefined && (
-          <span className="block h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
-            <span className="block h-full rounded-full bg-gradient-to-r from-brand-green via-brand-cyan to-brand-blue" style={{ width: `${bar}%` }} />
+          <span className="relative block h-1.5 overflow-hidden rounded-full bg-black/25">
+            <span className="block h-full rounded-full" style={{ width: `${bar}%`, background: t.accent[0] }} />
           </span>
         )}
-        <span className="text-sm text-text-muted">{note}</span>
+        <span className="relative text-sm text-white/80">{note}</span>
       </Link>
     </Reveal>
   );

@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { UserMenu } from "./UserMenu";
 import { navAlso, navLinks } from "@/lib/site";
+import { THEMES, themeForPath } from "@/lib/themes";
 import { cn } from "@/lib/cn";
 
 export function Navbar() {
@@ -28,6 +29,7 @@ export function Navbar() {
 
   // Reminder dot on "Practice" until today's daily challenge is answered.
   const userId = user?.id;
+  const navTheme = THEMES[themeForPath(pathname)];
   useEffect(() => {
     if (!userId) {
       setDailyPending(false);
@@ -76,7 +78,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <ul className="hidden flex-1 items-center gap-6 lg:flex">
+        <ul className="hidden flex-1 items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1 backdrop-blur-md lg:flex lg:flex-none">
           {navLinks.map((l) => {
             const active =
               l.href === "/" ? pathname === "/" : [l.href, ...(navAlso[l.href] ?? [])].some((h) => pathname.startsWith(h));
@@ -85,22 +87,29 @@ export function Navbar() {
                 <Link
                   href={l.href}
                   className={cn(
-                    "group relative py-2 text-[15px] transition-colors hover:text-brand-teal",
-                    active ? "text-text" : "text-text-muted",
+                    "group relative isolate block rounded-full px-3.5 py-2 text-[14.5px] font-medium transition-colors xl:px-4",
+                    active ? "text-white" : "text-text-muted hover:text-white",
                   )}
                 >
-                  {l.label}
-                  {l.href === "/practice" && dailyPending && (
-                    <span className="absolute -right-2.5 top-1 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" aria-label="Today's challenge is waiting" />
+                  {active && (
+                    <motion.span
+                      layoutId="nav-pill"
+                      className="absolute inset-0 -z-10 rounded-full"
+                      style={{ background: `linear-gradient(135deg, ${navTheme.accent[1]}, ${navTheme.bg[1]})`, boxShadow: `0 6px 24px -6px ${navTheme.accent[1]}` }}
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
                   )}
-                  <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-brand-teal transition-transform duration-300 group-hover:scale-x-100" />
+                  <span className="relative">{l.label}</span>
+                  {l.href === "/practice" && dailyPending && (
+                    <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.9)]" aria-label="Today's challenge is waiting" />
+                  )}
                 </Link>
               </li>
             );
           })}
         </ul>
 
-        <div className="ml-auto hidden items-center gap-3 sm:flex lg:ml-0">
+        <div className="ml-auto hidden items-center gap-3 sm:flex">
           {isPending ? (
             <span className="h-11 w-40 animate-pulse rounded-[10px] bg-white/[0.05]" aria-hidden="true" />
           ) : user ? (

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Reveal } from "@/components/ui/Reveal";
 import { TechBadge } from "@/components/ui/TechBadge";
 import { cn } from "@/lib/cn";
+import { THEMES, themeForTech } from "@/lib/themes";
 
 export const metadata: Metadata = {
   title: "DevOps Roadmap",
@@ -95,7 +96,7 @@ export default async function RoadmapPage() {
             <li key={stage.stage}>
               <Reveal variant="left" className="mb-6 flex items-baseline gap-4">
                 <span className="font-mono text-sm text-brand-teal">{String(si + 1).padStart(2, "0")}</span>
-                <h2 className="font-display text-2xl font-semibold sm:text-3xl">{stage.stage}</h2>
+                <h2 className="font-display text-[32px] font-black uppercase tracking-tighter sm:text-[48px]">{stage.stage}</h2>
                 <span className="hidden text-text-faint sm:inline">{stage.blurb}</span>
               </Reveal>
               <ol className="relative ml-4 flex flex-col gap-5 border-l border-slate-400/15 pl-8 sm:ml-6 sm:pl-10">
@@ -116,10 +117,14 @@ export default async function RoadmapPage() {
                       </span>
                       <article
                         className={cn(
-                          "gl-card rounded-[20px] border p-5 sm:p-6",
-                          isNext ? "border-brand-teal/50 bg-brand-teal/[0.05]" : step.status === "done" && signedIn ? "border-green-400/30 bg-green-400/[0.04]" : "border-slate-400/15 bg-white/[0.03]",
+                          "gl-card relative overflow-hidden rounded-[24px] p-5 ring-1 sm:p-6",
+                          isNext ? "ring-2 ring-white/60" : step.status === "done" && signedIn ? "ring-green-300/50" : "ring-white/10",
                         )}
+                        style={{ background: `linear-gradient(155deg, ${THEMES[themeForTech(step.tech.slug)].bg[1]}d9 0%, ${THEMES[themeForTech(step.tech.slug)].bg[0]} 85%)` }}
                       >
+                        <span aria-hidden="true" className="pointer-events-none absolute -bottom-6 -right-1 select-none font-display text-[110px] font-black leading-none tracking-tighter text-white/[0.08]">
+                          {step.tech.short.toUpperCase()}
+                        </span>
                         <div className="flex flex-wrap items-center gap-4">
                           <TechBadge tech={step.tech} size={52} />
                           <div className="min-w-0 flex-1">
@@ -129,7 +134,7 @@ export default async function RoadmapPage() {
                               {isNext && <span className="rounded-full bg-brand-teal px-2 py-0.5 text-[11px] font-semibold text-ink-900">Next up</span>}
                               {step.status === "done" && signedIn && <span className="rounded-full bg-green-400/20 px-2 py-0.5 text-[11px] font-semibold text-green-100">Completed</span>}
                             </div>
-                            <p className="mt-1 text-sm text-text-muted">{step.why}</p>
+                            <p className="mt-1 text-sm text-white/75">{step.why}</p>
                           </div>
                           {signedIn && <span className="font-mono text-lg font-semibold text-brand-teal">{step.percent}%</span>}
                         </div>

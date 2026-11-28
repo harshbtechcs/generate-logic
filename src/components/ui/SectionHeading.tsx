@@ -11,12 +11,12 @@ type Props = {
 /** Kicker label + big heading (+ optional intro text or element on the right). */
 export function SectionHeading({ kicker, title, intro, aside }: Props) {
   return (
-    <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
       <div className="flex flex-col gap-3">
         <Reveal as="span" variant="left" className="kicker">
           {kicker}
         </Reveal>
-        <h2 className="font-display text-[34px] font-bold tracking-tight sm:text-[42px]">
+        <h2 className="font-display text-[40px] font-black uppercase leading-[0.95] tracking-tighter sm:text-[60px] lg:text-[72px]">
           <LetterReveal text={title} delay={0.05} onView />
         </h2>
       </div>

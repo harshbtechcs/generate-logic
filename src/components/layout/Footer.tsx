@@ -43,6 +43,13 @@ export function Footer() {
         </Reveal>
       </div>
 
+      {/* giant wordmark, like the end card in the video */}
+      <div aria-hidden="true" className="relative overflow-hidden px-2 pt-4">
+        <span className="block select-none whitespace-nowrap bg-gradient-to-r from-brand-green via-brand-cyan to-brand-blue bg-clip-text text-center font-display text-[14.5vw] font-black leading-[0.8] tracking-tighter text-transparent opacity-90">
+          GENERATE LOGIC
+        </span>
+      </div>
+
       <div className="mx-auto flex max-w-site flex-wrap justify-between gap-3 border-t border-slate-400/10 px-5 pb-9 pt-[22px] text-sm text-text-faint sm:px-8">
         <span>© {new Date().getFullYear()} {site.name}. {site.tagline}</span>
         <span className="flex gap-5">

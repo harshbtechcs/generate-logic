@@ -17,11 +17,11 @@ export function PlaylistsSection({ playlists }: { playlists: Playlist[] }) {
     <section id="playlists" className="relative mx-auto max-w-site scroll-mt-24 px-5 py-24 sm:px-8">
       <SectionHeading
         kicker="03 / PLAYLISTS"
-        title="Fresh from the channel"
+        title="Fresh drops"
         aside={
           <Link
             href="/playlists"
-            className="gl-btn inline-flex items-center gap-2 rounded-xl border border-brand-teal/40 bg-brand-teal/10 px-5 py-3 text-sm font-medium text-teal-100"
+            className="gl-btn inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink-900"
           >
             View all playlists <ArrowRight size={17} aria-hidden="true" />
           </Link>

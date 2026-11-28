@@ -60,3 +60,24 @@ export function themeForKicker(kicker: string): ThemeName {
 export function themeForTech(slug: string): ThemeName {
   return slug in THEMES ? (slug as ThemeName) : "teal";
 }
+
+/** Theme for the current page, used to tint the navbar. */
+export function themeForPath(path: string): ThemeName {
+  const learn = path.match(/^\/(?:learn|quiz)\/([a-z0-9]+)/);
+  if (learn && learn[1] !== "mix") return themeForTech(learn[1]!);
+  const map: [string, ThemeName][] = [
+    ["/daily", "amber"],
+    ["/leaderboard", "orange"],
+    ["/quiz", "violet"],
+    ["/terminal", "green"],
+    ["/roadmap", "blue"],
+    ["/playlists", "red"],
+    ["/notes", "amber"],
+    ["/projects", "pink"],
+    ["/blog", "indigo"],
+    ["/privacy", "slate"],
+    ["/terms", "slate"],
+    ["/admin", "slate"],
+  ];
+  return map.find(([p]) => path.startsWith(p))?.[1] ?? "teal";
+}
