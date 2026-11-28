@@ -43,11 +43,18 @@ export function Footer() {
         </Reveal>
       </div>
 
-      {/* giant wordmark, like the end card in the video */}
-      <div aria-hidden="true" className="relative overflow-hidden px-2 pt-4">
-        <span className="block select-none whitespace-nowrap bg-gradient-to-r from-brand-green via-brand-cyan to-brand-blue bg-clip-text text-center font-display text-[14.5vw] font-black leading-[0.8] tracking-tighter text-transparent opacity-90">
-          GENERATE LOGIC
-        </span>
+      {/* giant wordmark that keeps scrolling, like the end card in the video */}
+      <div aria-hidden="true" className="relative overflow-hidden pt-6 pb-2 [mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)]">
+        <div className="anim-marquee-footer flex w-max">
+          {Array.from({ length: 4 }, (_, i) => (
+            <span key={i} className="flex shrink-0 items-center whitespace-nowrap">
+              <span className="text-flow bg-clip-text pr-[0.12em] font-display text-[18vw] font-black leading-[0.9] tracking-tighter text-transparent sm:text-[13vw]">
+                GENERATE LOGIC
+              </span>
+              <span className="mx-[3vw] text-[6vw] text-brand-teal sm:text-[4vw]">✦</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="mx-auto flex max-w-site flex-wrap justify-between gap-3 border-t border-slate-400/10 px-5 pb-9 pt-[22px] text-sm text-text-faint sm:px-8">
