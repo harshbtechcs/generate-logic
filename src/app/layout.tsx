@@ -7,7 +7,6 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { CardSpotlight } from "@/components/motion/CardSpotlight";
 import { BootIntro } from "@/components/wow/BootIntro";
-import { CustomCursor } from "@/components/wow/CustomCursor";
 import { CommandPalette } from "@/components/wow/CommandPalette";
 import { EasterEgg } from "@/components/wow/EasterEgg";
 import { site } from "@/lib/site";
@@ -62,7 +61,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <ScrollProgress />
           <CardSpotlight />
-          <CustomCursor />
           <CommandPalette />
           <EasterEgg />
           <Navbar />
