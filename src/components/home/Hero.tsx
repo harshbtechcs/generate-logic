@@ -146,7 +146,7 @@ export function Hero() {
             {site.tagline}
           </motion.div>
 
-          <h1 className="font-display text-[44px] font-bold leading-[1.04] tracking-tight sm:text-[56px] lg:text-[64px]">
+          <h1 className="font-display text-[44px] font-bold leading-[1.04] tracking-tight sm:text-[56px] lg:text-[64px] 2xl:text-[76px]">
             {[
               { text: "Learn Cloud.", d: 0.2 },
               { text: "Master DevOps.", d: 0.32 },

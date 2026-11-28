@@ -30,7 +30,7 @@ const config: Config = {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       maxWidth: {
-        site: "1280px",
+        site: "1600px",
       },
     },
   },
