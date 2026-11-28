@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRef } from "react";
-import { motion, useInView, useReducedMotion, type Variants } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform, type Variants } from "framer-motion";
+import { THEMES, type ThemeName } from "@/lib/themes";
 import { ArrowRight, Youtube } from "lucide-react";
 import { site } from "@/lib/site";
 import { techBySlug } from "@/lib/data";
@@ -37,6 +38,21 @@ const line: Variants = {
 
 const ORBIT = ["docker", "terraform", "aws", "jenkins", "git", "ansible"] as const;
 
+/**
+ * The hero cycles through these looks. `hue` turns the green/cyan 3D model
+ * into the tool's colour (degrees of CSS hue-rotate from the original cyan).
+ */
+const LOOKS: { theme: ThemeName; word: string; line: string; tool: string | null; hue: number }[] = [
+  { theme: "teal", word: "DEVOPS", line: "Build the Future.", tool: null, hue: 0 },
+  { theme: "docker", word: "DOCKER", line: "Ship with Docker.", tool: "Docker", hue: 22 },
+  { theme: "kubernetes", word: "K8S", line: "Scale with Kubernetes.", tool: "Kubernetes", hue: 50 },
+  { theme: "terraform", word: "IAC", line: "Automate with Terraform.", tool: "Terraform", hue: 70 },
+  { theme: "aws", word: "CLOUD", line: "Deploy on AWS.", tool: "AWS", hue: -151 },
+  { theme: "linux", word: "LINUX", line: "Own the Linux shell.", tool: "Linux", hue: -47 },
+  { theme: "git", word: "GIT", line: "Branch with Git.", tool: "Git", hue: -164 },
+];
+const LOOK_MS = 3800;
+
 function TypingChip({ cmd, delay, className, caret }: { cmd: string; delay: number; className: string; caret?: boolean }) {
   return (
     <div className={`absolute z-10 ${className}`}>
@@ -65,14 +81,55 @@ export function Hero() {
   const reduce = useReducedMotion() ?? false;
   const sceneRef = useRef<HTMLDivElement>(null);
   const sceneVisible = useInView(sceneRef, { margin: "100px" });
+  const [look, setLook] = useState(0);
+  const [hold, setHold] = useState(false);
+  const L = LOOKS[look]!;
+  const t = THEMES[L.theme];
+
+  // Cycle the colours while the hero is on screen.
+  useEffect(() => {
+    if (reduce || hold || !sceneVisible) return;
+    const id = setTimeout(() => setLook((i) => (i + 1) % LOOKS.length), look === 0 ? 2600 : LOOK_MS);
+    return () => clearTimeout(id);
+  }, [look, reduce, hold, sceneVisible]);
+
+  // Mouse parallax for the giant background word.
+  const mx = useMotionValue(0);
+  const sx = useSpring(mx, { stiffness: 50, damping: 18 });
+  const wordX = useTransform(sx, (v) => v * -40);
 
   return (
-    <section id="top" className="relative overflow-x-clip">
-      {/* ambient glow */}
-      <div
+    <section
+      id="top"
+      className="relative isolate overflow-x-clip"
+      onMouseMove={(e) => mx.set(e.clientX / window.innerWidth - 0.5)}
+      onMouseLeave={() => mx.set(0)}
+    >
+      {/* colour that follows the current tool */}
+      <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-64 left-1/2 h-[700px] w-[1100px] -translate-x-[20%] bg-[radial-gradient(closest-side,rgba(34,211,238,0.14),rgba(59,79,216,0.08)_55%,transparent)]"
+        className="pointer-events-none absolute inset-0 -z-20"
+        animate={{ background: `radial-gradient(85% 95% at 72% 38%, ${t.bg[1]}cc 0%, ${t.bg[0]}aa 50%, #060B19 100%)` }}
+        transition={{ duration: 1.1, ease: "easeInOut" }}
       />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] [background-image:radial-gradient(rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:3px_3px]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-[#060B19]" />
+
+      {/* giant background word */}
+      <motion.div aria-hidden="true" style={{ x: wordX }} className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 select-none overflow-hidden">
+        <AnimatePresence mode="popLayout">
+          <motion.span
+            key={L.word}
+            initial={{ y: "35%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            exit={{ y: "-35%", opacity: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="block whitespace-nowrap text-center font-display text-[28vw] font-black leading-none tracking-tighter text-white/[0.06] md:text-[20vw]"
+          >
+            {L.word}
+          </motion.span>
+        </AnimatePresence>
+      </motion.div>
 
       <div className="relative mx-auto flex max-w-site flex-wrap items-center gap-12 px-5 pb-20 pt-12 sm:px-8 lg:pt-16">
         {/* ---- text ---- */}
@@ -82,9 +139,10 @@ export function Hero() {
             initial="hidden"
             animate="show"
             custom={0.05}
-            className="inline-flex items-center gap-2.5 self-start rounded-full border border-brand-teal/30 bg-brand-teal/5 px-3.5 py-2 font-mono text-[13px] text-teal-200"
+            className="inline-flex items-center gap-2.5 self-start rounded-full border bg-white/5 px-3.5 py-2 font-mono text-[13px] backdrop-blur transition-colors duration-700"
+            style={{ borderColor: `${t.accent[1]}66`, color: t.accent[0] }}
           >
-            <span className="anim-pulse block h-2 w-2 rounded-full bg-brand-green" />
+            <span className="anim-pulse block h-2 w-2 rounded-full transition-colors duration-700" style={{ background: t.accent[1] }} />
             {site.tagline}
           </motion.div>
 
@@ -99,9 +157,21 @@ export function Hero() {
                 </motion.span>
               </span>
             ))}
-            <span className="block overflow-hidden pb-[0.06em]">
-              <motion.span className="text-shine block" variants={line} initial="hidden" animate="show" custom={0.44}>
-                Build the Future.
+            <span className="relative block overflow-hidden pb-[0.08em]">
+              <motion.span className="block" variants={line} initial="hidden" animate="show" custom={0.44}>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={L.line}
+                    className="block bg-clip-text text-transparent"
+                    style={{ backgroundImage: `linear-gradient(90deg, ${t.accent[0]}, ${t.accent[1]})` }}
+                    initial={{ y: "100%", rotateX: -60, opacity: 0 }}
+                    animate={{ y: "0%", rotateX: 0, opacity: 1 }}
+                    exit={{ y: "-100%", rotateX: 60, opacity: 0 }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {L.line}
+                  </motion.span>
+                </AnimatePresence>
               </motion.span>
             </span>
           </h1>
@@ -119,7 +189,8 @@ export function Hero() {
           <motion.div variants={rise} initial="hidden" animate="show" custom={0.8} className="flex flex-wrap gap-3.5">
             <Link
               href="/#paths"
-              className="gl-btn gl-glow inline-flex items-center gap-2.5 rounded-xl bg-brand-teal px-[26px] py-4 font-semibold text-ink-900"
+              className="gl-btn inline-flex items-center gap-2.5 rounded-xl px-[26px] py-4 font-semibold text-ink-900 shadow-[0_12px_40px_-10px_var(--hero-glow)] transition-colors duration-700"
+              style={{ background: t.accent[0], "--hero-glow": t.accent[1] } as React.CSSProperties}
             >
               Explore Learning Paths <ArrowRight size={18} strokeWidth={2.2} aria-hidden="true" />
             </Link>
@@ -127,7 +198,7 @@ export function Hero() {
               href={site.youtube}
               target="_blank"
               rel="noopener noreferrer"
-              className="gl-btn inline-flex items-center gap-2.5 rounded-xl border border-slate-400/30 bg-white/[0.03] px-6 py-4 font-semibold"
+              className="gl-btn inline-flex items-center gap-2.5 rounded-xl border border-white/25 bg-white/[0.06] px-6 py-4 font-semibold backdrop-blur"
             >
               <Youtube size={20} aria-hidden="true" /> Watch on YouTube
             </a>
@@ -138,14 +209,28 @@ export function Hero() {
             initial="hidden"
             animate="show"
             custom={0.95}
-            className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-sm text-text-faint"
+            className="flex flex-wrap gap-2"
+            onMouseEnter={() => setHold(true)}
+            onMouseLeave={() => setHold(false)}
           >
-            {["Docker", "Kubernetes", "Terraform", "AWS", "CI/CD"].map((t, i, a) => (
-              <span key={t} className="flex gap-5">
-                {t}
-                {i < a.length - 1 && <span aria-hidden="true">·</span>}
-              </span>
-            ))}
+            {LOOKS.filter((l) => l.tool).map((l) => {
+              const i = LOOKS.indexOf(l);
+              const on = i === look;
+              const lt = THEMES[l.theme];
+              return (
+                <button
+                  key={l.word}
+                  type="button"
+                  onClick={() => setLook(i)}
+                  aria-pressed={on}
+                  className="flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[13px] transition-all duration-500"
+                  style={on ? { borderColor: lt.accent[1], background: `${lt.accent[1]}26`, color: lt.accent[0] } : { borderColor: "rgba(148,163,184,0.2)", color: "rgba(148,163,184,0.8)" }}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ background: lt.accent[1] }} />
+                  {l.tool}
+                </button>
+              );
+            })}
           </motion.div>
         </div>
 
@@ -158,6 +243,7 @@ export function Hero() {
           transition={{ duration: 1.4, delay: 0.5, ease }}
           className="relative h-[420px] min-w-0 flex-[1_1_480px] sm:h-[560px]"
         >
+          <div className="absolute inset-0 transition-[filter] duration-1000 ease-in-out" style={{ filter: `hue-rotate(${L.hue}deg) saturate(${L.hue ? 1.25 : 1})` }}>
           {/* data flowing toward the model */}
           <svg viewBox="0 0 560 560" preserveAspectRatio="xMidYMid meet" className="pointer-events-none absolute inset-0 h-full w-full" fill="none" strokeLinecap="round">
             <path className="anim-flow" d="M20 120 C140 120 160 260 280 280" stroke="rgba(74,222,128,0.55)" strokeWidth="1.5" strokeDasharray="6 14" />
@@ -192,6 +278,7 @@ export function Hero() {
 
           <div className="absolute inset-0">
             <HeroScene animate={!reduce} visible={sceneVisible} />
+          </div>
           </div>
 
           <TypingChip cmd="docker compose up -d" delay={1.4} className="left-0 top-14 anim-bob-slow" />
