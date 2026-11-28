@@ -1,5 +1,8 @@
 import { Hero } from "@/components/home/Hero";
-import { Marquee } from "@/components/home/Marquee";
+import { ToolShowcase, type ShowcaseCounts } from "@/components/home/showcase/ToolShowcase";
+import { BigMarquee } from "@/components/home/showcase/BigMarquee";
+import { TheRoadmap } from "@/components/home/showcase/TheRoadmap";
+import { questionsForTool } from "@/lib/quiz/bank";
 import { Technologies } from "@/components/home/Technologies";
 import { RoadmapPreview } from "@/components/home/RoadmapPreview";
 import { PlaylistsSection } from "@/components/home/PlaylistsSection";
@@ -27,13 +30,19 @@ async function practiceData() {
   }
 }
 
+const SHOWCASE_COUNTS: ShowcaseCounts = Object.fromEntries(
+  ["docker", "kubernetes", "terraform", "aws", "linux", "git"].map((slug) => [slug, { questions: questionsForTool(slug).length }]),
+);
+
 export default async function HomePage() {
   const [playlists, practice] = await Promise.all([getChannelPlaylists(), practiceData()]);
   return (
     <>
       <Hero />
-      <Marquee />
+      <ToolShowcase counts={SHOWCASE_COUNTS} />
       <Technologies />
+      <BigMarquee />
+      <TheRoadmap />
       <RoadmapPreview />
       <PlaylistsSection playlists={playlists} />
       <PracticeSection daily={practice.daily} top={practice.top} />

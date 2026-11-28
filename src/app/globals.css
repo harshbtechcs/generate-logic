@@ -141,6 +141,9 @@ body {
 .anim-bob { animation: gl-bob 6s ease-in-out infinite; }
 .anim-bob-slow { animation: gl-bob 8s ease-in-out 1.2s infinite; }
 .marquee:hover .anim-marquee { animation-play-state: paused; }
+.anim-marquee-slow { animation: gl-marquee 60s linear infinite; }
+.anim-marquee-rev { animation: gl-marquee 60s linear infinite reverse; }
+.text-outline { color: transparent; -webkit-text-stroke: 2px rgba(148, 163, 184, 0.45); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
