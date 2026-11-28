@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, LayoutDashboard, LogOut, Settings, Shield } from "lucide-react";
+import { ChevronDown, Crown, LayoutDashboard, LogOut, Settings, Shield } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 
 function initials(name: string) {
@@ -60,17 +60,37 @@ export function UserMenu({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex h-11 items-center gap-2.5 rounded-full border border-slate-400/25 bg-white/[0.03] pl-1 pr-3 transition-colors hover:border-brand-teal/50"
+        className={`flex h-12 items-center gap-2.5 rounded-full border pl-1 pr-3 transition-colors ${
+          isAdmin ? "border-amber-300/40 bg-gradient-to-r from-amber-300/10 to-transparent hover:border-amber-300/70" : "border-slate-400/25 bg-white/[0.03] hover:border-brand-teal/50"
+        }`}
       >
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" width={36} height={36} referrerPolicy="no-referrer" className="h-9 w-9 rounded-full object-cover" />
-        ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-green to-brand-blue font-display text-sm font-bold text-ink-900">
-            {initials(name) || "U"}
-          </span>
-        )}
-        <span className="max-w-[120px] truncate text-sm font-medium">{name.split(" ")[0]}</span>
+        <span className="relative flex h-10 w-10 items-center justify-center">
+          {isAdmin && (
+            // spinning gold ring around the super admin's avatar
+            <span aria-hidden="true" className="absolute inset-0 animate-[spin_4s_linear_infinite] rounded-full bg-[conic-gradient(from_0deg,#fde68a,#f59e0b,#fb7185,#a78bfa,#22d3ee,#fde68a)]" />
+          )}
+          {image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={image} alt="" width={36} height={36} referrerPolicy="no-referrer" className="relative h-9 w-9 rounded-full border-2 border-ink-900 object-cover" />
+          ) : (
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink-900 bg-gradient-to-br from-brand-green to-brand-blue font-display text-sm font-bold text-ink-900">
+              {initials(name) || "U"}
+            </span>
+          )}
+          {isAdmin && (
+            <span aria-hidden="true" className="absolute -right-1 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-300 text-ink-900 shadow-[0_0_10px_rgba(252,211,77,0.8)]">
+              <Crown size={11} strokeWidth={2.6} />
+            </span>
+          )}
+        </span>
+        <span className="flex flex-col items-start leading-tight">
+          <span className="max-w-[120px] truncate text-sm font-semibold">{name.split(" ")[0]}</span>
+          {isAdmin && (
+            <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-rose-300 bg-clip-text text-[10px] font-bold uppercase tracking-[0.18em] text-transparent">
+              Super Admin
+            </span>
+          )}
+        </span>
         <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
 
@@ -89,7 +109,7 @@ export function UserMenu({
               <p className="truncate text-sm text-text-faint">{email}</p>
               {isAdmin && (
                 <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-amber-300/40 bg-amber-300/10 px-2 py-0.5 text-xs text-amber-200">
-                  <Shield size={12} aria-hidden="true" /> Admin
+                  <Crown size={12} aria-hidden="true" /> Super Admin
                 </span>
               )}
             </div>
