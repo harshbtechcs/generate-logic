@@ -1,5 +1,6 @@
 import { Reveal } from "./Reveal";
 import { LetterReveal } from "@/components/motion/AnimatedHeader";
+import { Scramble } from "@/components/wow/Scramble";
 
 type Props = {
   kicker: string;
@@ -14,7 +15,7 @@ export function SectionHeading({ kicker, title, intro, aside }: Props) {
     <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
       <div className="flex flex-col gap-3">
         <Reveal as="span" variant="left" className="kicker">
-          {kicker}
+          <Scramble text={kicker} />
         </Reveal>
         <h2 className="font-display text-[40px] font-black uppercase leading-[0.95] tracking-tighter sm:text-[60px] lg:text-[72px]">
           <LetterReveal text={title} delay={0.05} onView />

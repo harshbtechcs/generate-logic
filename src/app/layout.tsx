@@ -6,6 +6,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { CardSpotlight } from "@/components/motion/CardSpotlight";
+import { BootIntro } from "@/components/wow/BootIntro";
+import { CustomCursor } from "@/components/wow/CustomCursor";
+import { CommandPalette } from "@/components/wow/CommandPalette";
+import { EasterEgg } from "@/components/wow/EasterEgg";
 import { site } from "@/lib/site";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -46,8 +50,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable} ${mono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${display.variable} ${mono.variable}`} suppressHydrationWarning>
       <body>
+        <BootIntro />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-teal focus:px-4 focus:py-2 focus:text-ink-900"
@@ -57,6 +62,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <ScrollProgress />
           <CardSpotlight />
+          <CustomCursor />
+          <CommandPalette />
+          <EasterEgg />
           <Navbar />
           <main id="main">{children}</main>
           <Footer />

@@ -110,6 +110,15 @@ export function Navbar() {
         </ul>
 
         <div className="ml-auto hidden items-center gap-3 sm:flex">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("gl:open-palette"))}
+            className="hidden items-center gap-2 rounded-full border border-slate-400/20 bg-white/[0.03] px-3 py-2 font-mono text-xs text-text-muted transition-colors hover:border-brand-teal/50 hover:text-white xl:flex"
+            aria-label="Jump to a page (Ctrl+K)"
+          >
+            <span className="text-brand-green">$</span> jump to…
+            <kbd className="rounded border border-slate-400/30 px-1 text-[10px]">Ctrl K</kbd>
+          </button>
           {isPending ? (
             <span className="h-11 w-40 animate-pulse rounded-[10px] bg-white/[0.05]" aria-hidden="true" />
           ) : user ? (

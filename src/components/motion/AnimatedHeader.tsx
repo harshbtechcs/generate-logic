@@ -4,6 +4,7 @@ import { useRef, type ReactNode } from "react";
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { THEMES, type ThemeName } from "@/lib/themes";
 import { ICONS } from "./icons";
+import { Scramble } from "@/components/wow/Scramble";
 import { AwsArt, DockerArt, GitArt, KubernetesArt, LinuxArt, TerraformArt } from "@/components/home/showcase/art";
 
 const ART = { docker: DockerArt, kubernetes: KubernetesArt, terraform: TerraformArt, aws: AwsArt, linux: LinuxArt, git: GitArt } as const;
@@ -169,7 +170,7 @@ export function AnimatedHeader({ kicker, title, intro, theme, word, art, side, c
               animate={{ width: 36 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             />
-            {kicker}
+            <Scramble text={kicker} />
           </motion.span>
           <h1 className="font-display text-[42px] font-black uppercase leading-[0.95] tracking-tighter text-white sm:text-[60px] lg:text-[76px]">
             <LetterReveal text={title} delay={0.1} />
